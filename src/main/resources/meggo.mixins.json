@@ -3,7 +3,12 @@
 	"package": "net.eabbott.meggo.mixin",
 	"compatibilityLevel": "JAVA_25",
 	"mixins": [
-		"ExampleMixin"
+		"ChatComponentMixin",
+		"ChatScreenMixin",
+		"FrameGraphBuilderMixin",
+		"KeyboardHandlerMixin",
+		"LevelRendererMixin",
+		"MouseHandlerMixin"
 	],
 	"injectors": {
 		"defaultRequire": 1
