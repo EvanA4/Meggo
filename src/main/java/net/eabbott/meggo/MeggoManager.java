@@ -1,16 +1,18 @@
 package net.eabbott.meggo;
 
 import net.eabbott.meggo.dataclasses.LevelRenderContext;
+import net.eabbott.meggo.util.MeggoUtil;
 import net.minecraft.client.Minecraft;
 import net.minecraft.client.gui.components.EditBox;
 import net.minecraft.client.gui.screens.ChatScreen;
 import net.minecraft.client.gui.screens.Screen;
 import net.minecraft.client.multiplayer.ClientLevel;
+import net.minecraft.core.BlockPos;
 import net.minecraft.network.chat.Component;
+import net.minecraft.world.entity.Entity;
 import net.minecraft.world.level.chunk.LevelChunk;
 
 import java.util.Arrays;
-import java.util.stream.Stream;
 
 import static net.eabbott.meggo.Meggo.LOGGER;
 
@@ -40,11 +42,7 @@ public class MeggoManager {
         ) {
             String[] args = Arrays.copyOfRange(words, 1, words.length);
             args[0] = args[0].substring(1);
-
-            echo("Simulating function call with args:");
-            for (int i = 0; i < args.length; ++i) {
-                echo(String.format("    [%d]: \"%s\"", i, args[i]));
-            }
+            handleMeggoCommand(args);
 
             return true;
         }
@@ -109,5 +107,32 @@ public class MeggoManager {
     public static void onClientWorldTick() {
 //        LOGGER.info("Running onClientWorldTick...");
 
+    }
+
+    private static void handleMeggoCommand(String[] args) {
+        echo("Simulating function call with args:");
+        for (int i = 0; i < args.length; ++i) {
+            echo(String.format("    [%d]: \"%s\"", i, args[i]));
+        }
+
+        BlockPos blockPos = MeggoUtil.getTargetedBlock(64);
+        if (blockPos != null) {
+            echo(String.format(
+                    "    Target block: %d %d %d",
+                    blockPos.getX(),
+                    blockPos.getY(),
+                    blockPos.getZ())
+            );
+        }
+
+        Iterable<Entity> entities = MeggoUtil.getEntities();
+        if (entities != null) {
+            int ctr = 0;
+            for (Entity entity : entities) {
+                if (ctr == 5) break;
+                echo(String.format("    %s at %f %f %f", entity.getName().toString(), entity.getX(), entity.getY(), entity.getZ()));
+                ++ctr;
+            }
+        }
     }
 }
