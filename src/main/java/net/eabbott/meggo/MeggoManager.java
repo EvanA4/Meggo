@@ -1,35 +1,29 @@
 package net.eabbott.meggo;
 
 import net.eabbott.meggo.dataclasses.LevelRenderContext;
-import net.eabbott.meggo.util.MeggoUtil;
+import net.eabbott.meggo.util.concurrent.ChatQueue;
+import net.eabbott.meggo.util.concurrent.TaskList;
 import net.minecraft.client.Minecraft;
 import net.minecraft.client.gui.components.EditBox;
 import net.minecraft.client.gui.screens.ChatScreen;
 import net.minecraft.client.gui.screens.Screen;
 import net.minecraft.client.multiplayer.ClientLevel;
-import net.minecraft.core.BlockPos;
-import net.minecraft.gizmos.GizmoStyle;
-import net.minecraft.gizmos.Gizmos;
 import net.minecraft.network.chat.Component;
-import net.minecraft.util.ARGB;
-import net.minecraft.world.entity.Entity;
-import net.minecraft.world.level.PathNavigationRegion;
 import net.minecraft.world.level.chunk.LevelChunk;
-import net.minecraft.world.level.pathfinder.Node;
-import net.minecraft.world.level.pathfinder.Path;
-import net.minecraft.world.phys.AABB;
 
 import java.util.Arrays;
+import java.util.HashMap;
+import java.util.Objects;
 
 import static net.eabbott.meggo.Meggo.LOGGER;
 
 public class MeggoManager {
-    public static Path PATH_TO_RENDER = null;
+    private static final HashMap<String, MeggoScript> scripts = new HashMap<>();
+    private static final TaskList tasks = new TaskList();
+    private static final ChatQueue chatQueue = new ChatQueue();
 
-    public static void echo(String text) {
-        var minecraft = Minecraft.getInstance();
-        var chat = minecraft.gui.hud.getChat();
-        chat.addClientSystemMessage(Component.nullToEmpty(text));
+    public static void print(String text) {
+        chatQueue.push(text);
     }
 
     public static void init() {
@@ -90,17 +84,6 @@ public class MeggoManager {
 
     public static void onRenderBegin(LevelRenderContext levelRenderContext) {
 //        LOGGER.info("Running onRenderBegin...");
-        var color       = ARGB.color(0, 0, 200, 255);
-        var fill_color  = ARGB.color(50,  0, 200, 255);
-        var filled      = GizmoStyle.strokeAndFill(color, 1.5f, fill_color);
-
-        if (PATH_TO_RENDER != null) {
-            for (int i = 0; i < PATH_TO_RENDER.getNodeCount(); ++i) {
-                Node node = PATH_TO_RENDER.getNode(i);
-                var box = new AABB(new BlockPos(node.x, node.y, node.z));
-                Gizmos.cuboid(box, filled).setAlwaysOnTop();
-            }
-        }
 
     }
 
@@ -126,37 +109,79 @@ public class MeggoManager {
 
     public static void onClientWorldTick() {
 //        LOGGER.info("Running onClientWorldTick...");
-
+        chatQueue.flush();
     }
 
     private static void handleMeggoCommand(String[] args) {
-        echo("Simulating function call with args:");
-        for (int i = 0; i < args.length; ++i) {
-            echo(String.format("    [%d]: \"%s\"", i, args[i]));
-        }
-
-        BlockPos blockPos = MeggoUtil.getTargetedBlock(64);
-        if (blockPos != null) {
-            echo(String.format(
-                    "    Target block: %d %d %d",
-                    blockPos.getX(),
-                    blockPos.getY(),
-                    blockPos.getZ())
-            );
-        }
-
-        Iterable<Entity> entities = MeggoUtil.getEntities();
-        if (entities != null) {
-            int ctr = 0;
-            for (Entity entity : entities) {
-                if (ctr == 5) break;
-                echo(String.format("    %s at %f %f %f", entity.getName().toString(), entity.getX(), entity.getY(), entity.getZ()));
-                ++ctr;
+        // Check manager commands
+        if (Objects.equals(args[0], "tasks")) {
+            print("Current tasks:");
+            for (Long i : tasks.keySet()) {
+                print(String.format("    [%d] %s", i, tasks.get(i)));
             }
         }
 
-        if (blockPos != null) {
-            PATH_TO_RENDER = MeggoUtil.getPath(blockPos);
+        // Check non-manager commands
+        else if (!scripts.containsKey(args[0])) {
+            print(String.format("Command not recognized: \"%s\"", args[0]));
+
+        } else {
+            MeggoThread task = new MeggoThread(args[0], args);
+            task.start();
         }
     }
+
+    public static void addScript(MeggoScript script) {
+        scripts.put(script.getName(), script);
+    }
+
+    // FUNCTIONS BELOW CAN ONLY BE RUN BY SECONDARY THREADS
+
+    public static void runScript(String name, String[] args) {
+        tasks.put(Thread.currentThread().threadId(), name);
+        scripts.get(name).run(args);
+        tasks.remove(Thread.currentThread().threadId());
+//        remove all event listeners for a particular thread ID
+    }
 }
+
+/*
+    BlockPos blockPos = MeggoUtil.getTargetedBlock(64);
+    if (blockPos != null) {
+        echo(String.format(
+                "    Target block: %d %d %d",
+                blockPos.getX(),
+                blockPos.getY(),
+                blockPos.getZ())
+        );
+    }
+
+    Iterable<Entity> entities = MeggoUtil.getEntities();
+    if (entities != null) {
+        int ctr = 0;
+        for (Entity entity : entities) {
+            if (ctr == 5) break;
+            echo(String.format("    %s at %f %f %f", entity.getName().toString(), entity.getX(), entity.getY(), entity.getZ()));
+            ++ctr;
+        }
+    }
+
+    if (blockPos != null) {
+        PATH_TO_RENDER = MeggoUtil.getPath(blockPos);
+    }
+
+
+
+
+    var color       = ARGB.color(0, 0, 200, 255);
+    var fill_color  = ARGB.color(50,  0, 200, 255);
+    var filled      = GizmoStyle.strokeAndFill(color, 1.5f, fill_color);
+
+    if (PATH_TO_RENDER != null) {
+        for (int i = 0; i < PATH_TO_RENDER.getNodeCount(); ++i) {
+            Node node = PATH_TO_RENDER.getNode(i);
+            var box = new AABB(new BlockPos(node.x, node.y, node.z));
+            Gizmos.cuboid(box, filled).setAlwaysOnTop();
+        }
+    }
+* */
