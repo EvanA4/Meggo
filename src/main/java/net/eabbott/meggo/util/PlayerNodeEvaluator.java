@@ -15,7 +15,6 @@ import net.minecraft.core.Direction;
 import net.minecraft.tags.BlockTags;
 import net.minecraft.tags.FluidTags;
 import net.minecraft.util.Mth;
-import net.minecraft.world.entity.Mob;
 import net.minecraft.world.level.BlockGetter;
 import net.minecraft.world.level.PathNavigationRegion;
 import net.minecraft.world.level.block.BaseRailBlock;
@@ -33,6 +32,8 @@ import net.minecraft.world.phys.Vec3;
 import net.minecraft.world.phys.shapes.VoxelShape;
 import org.jspecify.annotations.Nullable;
 
+import static net.minecraft.world.level.pathfinder.NodeEvaluator.isBurningBlock;
+
 public class PlayerNodeEvaluator {
     public static final double SPACE_BETWEEN_WALL_POSTS = 0.5;
     private static final double DEFAULT_MOB_JUMP_HEIGHT = 1.125;
@@ -46,10 +47,10 @@ public class PlayerNodeEvaluator {
     private int entityWidth;
     private int entityHeight;
     private int entityDepth;
-    private boolean canPassDoors = true;
-    private boolean canOpenDoors;
-    private boolean canFloat;
-    private boolean canWalkOverFences;
+    private final boolean canPassDoors = true;
+    private final boolean canOpenDoors = true;
+    private final boolean canFloat = false;
+    private final boolean canWalkOverFences = true;
 
     protected Node getNode(final BlockPos pos) {
         return this.getNode(pos.getX(), pos.getY(), pos.getZ());
@@ -126,27 +127,25 @@ public class PlayerNodeEvaluator {
     protected Node getStartNode(final BlockPos pos) {
         Node node = this.getNode(pos);
         node.type = this.getCachedPathType(node.x, node.y, node.z);
-        node.costMalus = this.player.getPathfindingMalus(node.type);
+        node.costMalus = node.type.getMalus();
         return node;
     }
 
     protected boolean canStartAt(final BlockPos pos) {
         PathType blockPathType = this.getCachedPathType(pos.getX(), pos.getY(), pos.getZ());
-        return blockPathType != PathType.OPEN && this.player.getPathfindingMalus(blockPathType) >= 0.0F;
+        return blockPathType != PathType.OPEN && blockPathType.getMalus() >= 0.0F;
     }
 
-    @Override
     public Target getTarget(final double x, final double y, final double z) {
-        return this.getTargetNodeAt(x, y, z);
+        return new Target(this.getNode(Mth.floor(x), Mth.floor(y), Mth.floor(z)));
     }
 
-    @Override
     public int getNeighbors(final Node[] neighbors, final Node pos) {
         int p = 0;
         int jumpSize = 0;
         PathType blockPathTypeAbove = this.getCachedPathType(pos.x, pos.y + 1, pos.z);
         PathType blockPathTypeCurrent = this.getCachedPathType(pos.x, pos.y, pos.z);
-        if (this.player.getPathfindingMalus(blockPathTypeAbove) >= 0.0F && blockPathTypeCurrent != PathType.STICKY_HONEY) {
+        if (blockPathTypeAbove.getMalus() >= 0.0F && blockPathTypeCurrent != PathType.STICKY_HONEY) {
             jumpSize = Mth.floor(Math.max(1.0F, this.player.maxUpStep()));
         }
 
@@ -234,7 +233,7 @@ public class PlayerNodeEvaluator {
 
     protected double getFloorLevel(final BlockPos pos) {
         BlockGetter level = this.currentContext.level();
-        return (this.canFloat() || this.isAmphibious()) && level.getFluidState(pos).is(FluidTags.WATER) ? pos.getY() + 0.5 : getFloorLevel(level, pos);
+        return (this.canFloat || this.isAmphibious()) && level.getFluidState(pos).is(FluidTags.WATER) ? pos.getY() + 0.5 : getFloorLevel(level, pos);
     }
 
     public static double getFloorLevel(final BlockGetter level, final BlockPos pos) {
@@ -258,7 +257,7 @@ public class PlayerNodeEvaluator {
         }
 
         PathType pathType = this.getCachedPathType(x, y, z);
-        float pathCost = this.player.getPathfindingMalus(pathType);
+        float pathCost = pathType.getMalus();
         if (pathCost >= 0.0F) {
             best = this.getNodeAndUpdateCostToMax(x, y, z, pathType, pathCost);
         }
@@ -270,12 +269,12 @@ public class PlayerNodeEvaluator {
         if (pathType != PathType.WALKABLE && (!this.isAmphibious() || pathType != PathType.WATER)) {
             if ((best == null || best.costMalus < 0.0F)
                     && jumpSize > 0
-                    && (pathType != PathType.FENCE || this.canWalkOverFences())
+                    && (pathType != PathType.FENCE || this.canWalkOverFences)
                     && pathType != PathType.UNPASSABLE_RAIL
                     && pathType != PathType.TRAPDOOR
                     && pathType != PathType.POWDER_SNOW) {
                 best = this.tryJumpOn(x, y, z, jumpSize, nodeHeight, travelDirection, blockPathTypeCurrent, reusablePos);
-            } else if (!this.isAmphibious() && pathType == PathType.WATER && !this.canFloat()) {
+            } else if (!this.isAmphibious() && pathType == PathType.WATER && !this.canFloat) {
                 best = this.tryFindFirstNonWaterBelow(x, y, z, best);
             } else if (pathType == PathType.OPEN) {
                 best = this.tryFindFirstGroundNodeBelow(x, y, z);
@@ -361,7 +360,7 @@ public class PlayerNodeEvaluator {
                 return best;
             }
 
-            best = this.getNodeAndUpdateCostToMax(x, y, z, pathTypeLocal, this.player.getPathfindingMalus(pathTypeLocal));
+            best = this.getNodeAndUpdateCostToMax(x, y, z, pathTypeLocal, pathTypeLocal.getMalus());
             y--;
         }
 
@@ -375,7 +374,7 @@ public class PlayerNodeEvaluator {
             }
 
             PathType pathType = this.getCachedPathType(x, currentY, z);
-            float pathCost = this.player.getPathfindingMalus(pathType);
+            float pathCost = pathType.getMalus();
             if (pathType != PathType.OPEN) {
                 if (pathCost >= 0.0F) {
                     return this.getNodeAndUpdateCostToMax(x, currentY, z, pathType, pathCost);
@@ -396,8 +395,7 @@ public class PlayerNodeEvaluator {
         return this.pathTypesByPosCacheByMob.computeIfAbsent(BlockPos.asLong(x, y, z), k -> this.getPathTypeOfMob(this.currentContext, x, y, z, this.player));
     }
 
-    @Override
-    public PathType getPathTypeOfMob(final PathfindingContext context, final int x, final int y, final int z, final Mob mob) {
+    public PathType getPathTypeOfMob(final PlayerPathfindingContext context, final int x, final int y, final int z, final LocalPlayer mob) {
         Set<PathType> blockTypes = this.getPathTypeWithinMobBB(context, x, y, z);
         if (blockTypes.size() == 1) {
             return blockTypes.iterator().next();
@@ -412,10 +410,10 @@ public class PlayerNodeEvaluator {
         }
 
         PathType highestMalusPathTypeWithinBB = PathType.BLOCKED;
-        float highestMalusWithinBB = mob.getPathfindingMalus(highestMalusPathTypeWithinBB);
+        float highestMalusWithinBB = highestMalusPathTypeWithinBB.getMalus();
 
         for (PathType pathType : blockTypes) {
-            float malusForPathType = mob.getPathfindingMalus(pathType);
+            float malusForPathType = pathType.getMalus();
             if (malusForPathType < 0.0F) {
                 return pathType;
             }
@@ -429,8 +427,8 @@ public class PlayerNodeEvaluator {
         PathType currentNodePathType = this.getPathType(context, x, y, z);
         boolean isLargeMob = this.entityWidth > 1;
         if (isLargeMob) {
-            boolean isCurrentNodeCheaper = mob.getPathfindingMalus(currentNodePathType) < highestMalusWithinBB;
-            boolean capMalusDueToCheapNode = isCurrentNodeCheaper && mob.getPathfindingMalus(PathType.BIG_MOBS_CLOSE_TO_DANGER) < highestMalusWithinBB;
+            boolean isCurrentNodeCheaper = currentNodePathType.getMalus() < highestMalusWithinBB;
+            boolean capMalusDueToCheapNode = isCurrentNodeCheaper && PathType.BIG_MOBS_CLOSE_TO_DANGER.getMalus() < highestMalusWithinBB;
             return capMalusDueToCheapNode ? PathType.BIG_MOBS_CLOSE_TO_DANGER : highestMalusPathTypeWithinBB;
         } else {
             return currentNodePathType == PathType.OPEN && highestMalusPathTypeWithinBB != PathType.OPEN && highestMalusWithinBB == 0.0F
@@ -439,7 +437,7 @@ public class PlayerNodeEvaluator {
         }
     }
 
-    public Set<PathType> getPathTypeWithinMobBB(final PathfindingContext context, final int x, final int y, final int z) {
+    public Set<PathType> getPathTypeWithinMobBB(final PlayerPathfindingContext context, final int x, final int y, final int z) {
         EnumSet<PathType> blockTypes = EnumSet.noneOf(PathType.class);
 
         for (int dx = 0; dx < this.entityWidth; dx++) {
@@ -450,8 +448,8 @@ public class PlayerNodeEvaluator {
                     int zz = dz + z;
                     PathType blockType = this.getPathType(context, xx, yy, zz);
                     BlockPos mobPosition = this.player.blockPosition();
-                    boolean canPassDoors = this.canPassDoors();
-                    if (blockType == PathType.DOOR_WOOD_CLOSED && this.canOpenDoors() && canPassDoors) {
+                    boolean canPassDoors = this.canPassDoors;
+                    if (blockType == PathType.DOOR_WOOD_CLOSED && this.canOpenDoors && canPassDoors) {
                         blockType = PathType.WALKABLE_DOOR;
                     }
 
@@ -473,16 +471,11 @@ public class PlayerNodeEvaluator {
         return blockTypes;
     }
 
-    @Override
-    public PathType getPathType(final PathfindingContext context, final int x, final int y, final int z) {
+    public PathType getPathType(final PlayerPathfindingContext context, final int x, final int y, final int z) {
         return getPathTypeStatic(context, new BlockPos.MutableBlockPos(x, y, z));
     }
 
-    public static PathType getPathTypeStatic(final Mob mob, final BlockPos pos) {
-        return getPathTypeStatic(new PathfindingContext(mob.level(), mob), pos.mutable());
-    }
-
-    public static PathType getPathTypeStatic(final PathfindingContext context, final BlockPos.MutableBlockPos pos) {
+    public static PathType getPathTypeStatic(final PlayerPathfindingContext context, final BlockPos.MutableBlockPos pos) {
         int x = pos.getX();
         int y = pos.getY();
         int z = pos.getZ();
@@ -503,7 +496,7 @@ public class PlayerNodeEvaluator {
         }
     }
 
-    public static PathType checkNeighbourBlocks(final PathfindingContext context, final int x, final int y, final int z, final PathType blockPathType) {
+    public static PathType checkNeighbourBlocks(final PlayerPathfindingContext context, final int x, final int y, final int z, final PathType blockPathType) {
         for (int dx = -1; dx <= 1; dx++) {
             for (int dy = -1; dy <= 1; dy++) {
                 for (int dz = -1; dz <= 1; dz++) {
