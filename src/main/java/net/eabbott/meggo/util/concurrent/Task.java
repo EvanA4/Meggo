@@ -1,15 +1,39 @@
 package net.eabbott.meggo.util.concurrent;
 
+import net.eabbott.meggo.MeggoEvent;
 import net.eabbott.meggo.MeggoScript;
 
 public class Task {
+    public long uniqueParentID;
+    public long uniqueID;
     public Thread thread;
     public MeggoScript script;
-    public String role;
+    public boolean isRunner;
+    public MeggoEvent eventType;
 
-    public Task(Thread thread, MeggoScript script, String role) {
-         this.thread = thread;
-         this.script = script;
-         this.role = role;
+    private Task() {}
+
+    public static Task createRunTask(long uniqueID, Thread thread, MeggoScript script) {
+        Task runTask = new Task();
+        runTask.uniqueParentID = -1;
+        runTask.uniqueID = uniqueID;
+        runTask.thread = thread;
+        runTask.script = script;
+        runTask.isRunner = true;
+        runTask.eventType = null;
+        return runTask;
+    }
+
+    public static Task createListenTask(
+        long uniqueParentID, long uniqueID, Thread thread, MeggoScript script, MeggoEvent eventType
+    ) {
+        Task listenTask = new Task();
+        listenTask.uniqueParentID = uniqueParentID;
+        listenTask.uniqueID = uniqueID;
+        listenTask.thread = thread;
+        listenTask.script = script;
+        listenTask.isRunner = false;
+        listenTask.eventType = eventType;
+        return listenTask;
     }
 }

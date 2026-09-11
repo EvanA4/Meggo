@@ -16,6 +16,7 @@ import java.util.Arrays;
 import java.util.HashMap;
 import java.util.Objects;
 import java.util.concurrent.CountDownLatch;
+import java.util.concurrent.atomic.AtomicLong;
 
 import static net.eabbott.meggo.Meggo.LOGGER;
 
@@ -26,6 +27,7 @@ public class MeggoManager {
     private static final ListenerList listeners = new ListenerList();
     private static final GuardedMap<MeggoEvent, CountDownLatch> listenerLocks = new GuardedMap<>();
     private static final GuardedMap<MeggoEvent, EventArgs> eventArgsMap = new GuardedMap<>();
+    private static final AtomicLong idGenerator = new AtomicLong(0);
 
     public static void print(String text) {
         chatQueue.push(text);
@@ -148,8 +150,9 @@ public class MeggoManager {
     public static void runScript(String name, String[] args) {
         try {
             MeggoScript env = scripts.get(name).getDeclaredConstructor().newInstance();
-            Task task = new Task(Thread.currentThread(), env, "runner");
-            tasks.put(Thread.currentThread().threadId(), task);
+            long rid = idGenerator.incrementAndGet();
+            Task task = Task.createRunTask(rid, Thread.currentThread(), env);
+            tasks.put(rid, task);
             env.run(args);
 
         } catch (Exception e) {
@@ -158,17 +161,25 @@ public class MeggoManager {
         } finally {
             Long threadID = Thread.currentThread().threadId();
             tasks.remove(threadID);
-            listeners.remove(threadID);
         }
     }
 
-    public static void addListener(Long parentID, MeggoEvent event) {
-        if (!listeners.contains(parentID, event)) {
-            listeners.add(parentID, event);
-
-            ListenerThread task = new ListenerThread();
-            task.start();
+    public static void addListener(Long uniqueParentID, MeggoEvent eventType) {
+        Task parentTask = tasks.get(uniqueParentID);
+        if (parentTask != null && !listeners.contains(uniqueParentID, eventType)) {
+            long lid = idGenerator.incrementAndGet();
+            listeners.add(uniqueParentID, lid, eventType);
+            ListenerThread lt = new ListenerThread(uniqueParentID, parentTask.script, eventType);
+            Task childTask = Task.createListenTask(
+                    uniqueParentID, lid, lt, parentTask.script, eventType
+            );
+            tasks.put(lid, childTask);
+            lt.start();
         }
+    }
+
+    public static void removeListener(Long uniqueParentID, MeggoEvent eventType) {
+
     }
 
     public static boolean waitForEvent(MeggoEvent eventType) {
@@ -183,11 +194,6 @@ public class MeggoManager {
         } catch (Exception e) {
             return false;
         }
-    }
-
-    public static @Nullable MeggoScript getScriptEnv(Long threadID) {
-        Task task = tasks.get(threadID);
-        return task == null ? null : task.script;
     }
 
     public static @Nullable EventArgs getEventArgs(MeggoEvent eventType) {

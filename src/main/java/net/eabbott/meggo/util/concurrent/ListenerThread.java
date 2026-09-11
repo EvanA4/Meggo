@@ -6,10 +6,12 @@ import net.eabbott.meggo.MeggoScript;
 import net.eabbott.meggo.dataclasses.EventArgs;
 
 public class ListenerThread extends Thread {
+    Long uniqueParentID;
     MeggoScript script;
     MeggoEvent eventType;
 
-    public ListenerThread(MeggoScript script, MeggoEvent eventType) {
+    public ListenerThread(Long uniqueParentID, MeggoScript script, MeggoEvent eventType) {
+        this.uniqueParentID = uniqueParentID;
         this.script = script;
         this.eventType = eventType;
     }
@@ -57,6 +59,7 @@ public class ListenerThread extends Thread {
                 }
             }
         }
+
         // TODO: cleanup thread here
     }
 }
