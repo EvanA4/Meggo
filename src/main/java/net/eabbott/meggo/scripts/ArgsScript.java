@@ -16,4 +16,6 @@ public class ArgsScript extends MeggoScript {
             MeggoManager.print(String.format("    [%d]: \"%s\"", i, args[i]));
         }
     }
+
+    public MeggoScript
 }

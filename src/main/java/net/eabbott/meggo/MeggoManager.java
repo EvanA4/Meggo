@@ -1,8 +1,8 @@
 package net.eabbott.meggo;
 
+import net.eabbott.meggo.dataclasses.EventArgs;
 import net.eabbott.meggo.dataclasses.LevelRenderContext;
-import net.eabbott.meggo.util.concurrent.ChatQueue;
-import net.eabbott.meggo.util.concurrent.TaskList;
+import net.eabbott.meggo.util.concurrent.*;
 import net.minecraft.client.Minecraft;
 import net.minecraft.client.gui.components.EditBox;
 import net.minecraft.client.gui.screens.ChatScreen;
@@ -10,17 +10,22 @@ import net.minecraft.client.gui.screens.Screen;
 import net.minecraft.client.multiplayer.ClientLevel;
 import net.minecraft.network.chat.Component;
 import net.minecraft.world.level.chunk.LevelChunk;
+import org.jspecify.annotations.Nullable;
 
 import java.util.Arrays;
 import java.util.HashMap;
 import java.util.Objects;
+import java.util.concurrent.CountDownLatch;
 
 import static net.eabbott.meggo.Meggo.LOGGER;
 
 public class MeggoManager {
-    private static final HashMap<String, MeggoScript> scripts = new HashMap<>();
-    private static final TaskList tasks = new TaskList();
+    private static final HashMap<String, Class<? extends MeggoScript>> scripts = new HashMap<>();
+    private static final GuardedMap<Long, Task> tasks = new GuardedMap<>();
     private static final ChatQueue chatQueue = new ChatQueue();
+    private static final ListenerList listeners = new ListenerList();
+    private static final GuardedMap<MeggoEvent, CountDownLatch> listenerLocks = new GuardedMap<>();
+    private static final GuardedMap<MeggoEvent, EventArgs> eventArgsMap = new GuardedMap<>();
 
     public static void print(String text) {
         chatQueue.push(text);
@@ -28,6 +33,9 @@ public class MeggoManager {
 
     public static void init() {
         LOGGER.info("Starting Meggo on OS: {}", System.getProperty("os.name"));
+        for (MeggoEvent eventType : MeggoEvent.values()) {
+            eventArgsMap.put(eventType, new EventArgs(eventType));
+        }
     }
 
     public static boolean onClientChatReceived(Component message) {
@@ -126,22 +134,64 @@ public class MeggoManager {
             print(String.format("Command not recognized: \"%s\"", args[0]));
 
         } else {
-            MeggoThread task = new MeggoThread(args[0], args);
+            RunnerThread task = new RunnerThread(args[0], args);
             task.start();
         }
     }
 
-    public static void addScript(MeggoScript script) {
+    public static void addScript(Class<? extends MeggoScript> script) {
         scripts.put(script.getName(), script);
     }
 
     // FUNCTIONS BELOW CAN ONLY BE RUN BY SECONDARY THREADS
 
     public static void runScript(String name, String[] args) {
-        tasks.put(Thread.currentThread().threadId(), name);
-        scripts.get(name).run(args);
-        tasks.remove(Thread.currentThread().threadId());
-//        remove all event listeners for a particular thread ID
+        try {
+            MeggoScript env = scripts.get(name).getDeclaredConstructor().newInstance();
+            Task task = new Task(Thread.currentThread(), env, "runner");
+            tasks.put(Thread.currentThread().threadId(), task);
+            env.run(args);
+
+        } catch (Exception e) {
+            print(String.format("Failed to start task for \"%s\": %s", name, e.getMessage()));
+
+        } finally {
+            Long threadID = Thread.currentThread().threadId();
+            tasks.remove(threadID);
+            listeners.remove(threadID);
+        }
+    }
+
+    public static void addListener(Long parentID, MeggoEvent event) {
+        if (!listeners.contains(parentID, event)) {
+            listeners.add(parentID, event);
+
+            ListenerThread task = new ListenerThread();
+            task.start();
+        }
+    }
+
+    public static boolean waitForEvent(MeggoEvent eventType) {
+        try {
+            CountDownLatch signal = listenerLocks.get(eventType);
+            if (signal != null) {
+                signal.await();
+                return true;
+            }
+            return false;
+
+        } catch (Exception e) {
+            return false;
+        }
+    }
+
+    public static @Nullable MeggoScript getScriptEnv(Long threadID) {
+        Task task = tasks.get(threadID);
+        return task == null ? null : task.script;
+    }
+
+    public static @Nullable EventArgs getEventArgs(MeggoEvent eventType) {
+        return eventArgsMap.get(eventType);
     }
 }
 
@@ -185,3 +235,41 @@ public class MeggoManager {
         }
     }
 * */
+
+/*
+ * What do I need?
+ * - Scripts should not be stored by instance but by class
+ * - Store threads in hierarchy:
+ *   - Main thread + dynamic list of event listener threads
+ * - Script class has abstract boolean canMovePlayer (call these "motor scripts/threads")
+ *   - Throw error in main thread if trying to call one motor script while currently running another
+ * - Manager needs a registerListener method
+ *   - Spawn new thread
+ *
+ *
+ * hashmap
+ *   - thread ID to script object, and role (ex. tick_listener, runner, etc.)
+ * killing
+ *   - killing runner thread should kill all listener threads
+ *   - killing listener thread should not kill runner thread
+ *   - figure out if can kill by TID, or if need thread object in hashmap
+ *      - if need object, must spawn listener threads creatively without executor?
+ * registering listeners
+ *   - runner thread calls registerListener(runnerID, eventName)
+ *   - executor => threads[rid].script.corresponding
+ *
+ * listeners need to be signaled, use CountDownLatch signal = new CountDownLatch(1);
+ *  - might need shared memory
+ *      - map listener thread to event arg storage
+ *  - calling signal again before child is waiting does not do anything, child must wait till next cycle
+ *      - good solution, alternative is semaphore which would let child run at max speed until caught up with parent
+ * - while not interrupted, keep calling env's listener with shared memory
+ *
+ * runner threads need a unique identifier from AtomicLong
+ *  - created runner thread has unique ID in Task map
+ *      - in lifetime of thread, listeners are registered under unique parent ID
+ *          - listener threads are created with uniqueParentID, scriptEnvironment, eventType
+ *          - listeners stored in listener list under unique ID
+ *  - when runner dies, Task map has runner task removed
+ *  - during runner lifetime or after, either runner kills child itself or child kills itself
+ * */

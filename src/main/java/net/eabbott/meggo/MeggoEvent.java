@@ -1,0 +1,16 @@
+package net.eabbott.meggo;
+
+public enum MeggoEvent {
+    CLIENT_CHAT_RECEIVED,
+    CHAT_SCREEN_INPUT,
+    RENDER_PASS_BEGIN,
+    KEYBOARD_INPUT,
+    KEY_INPUT,
+    KEYBOARD_KEY_PRESSED,
+    RENDER_BEGIN,
+    RENDER_END,
+    MOUSE_CLICK,
+    CHUNK_LOAD,
+    CHUNK_UNLOAD,
+    CLIENT_WORLD_TICK
+}

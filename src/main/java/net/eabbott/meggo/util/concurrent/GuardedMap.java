@@ -6,16 +6,16 @@ import java.util.HashMap;
 import java.util.Set;
 import java.util.concurrent.locks.ReentrantLock;
 
-public class TaskList {
-    private static final HashMap<Long, String> tasks = new HashMap<>();
+public class GuardedMap<K, V> {
+    private final HashMap<K, V> map = new HashMap<>();
     private final ReentrantLock lock = new ReentrantLock();
 
-    public @Nullable String get(Long threadID) {
-        String output = null;
+    public @Nullable V get(K key) {
+        V output = null;
         lock.lock();
         try {
-            if (tasks.containsKey(threadID)) {
-                output = tasks.get(threadID);
+            if (map.containsKey(key)) {
+                output = map.get(key);
             }
         } finally {
             lock.unlock();
@@ -23,29 +23,40 @@ public class TaskList {
         return output;
     }
 
-    public void put(Long threadID, String script) {
+    public void put(K key, V value) {
         lock.lock();
         try {
-            tasks.put(threadID, script);
+            map.put(key, value);
         } finally {
             lock.unlock();
         }
     }
 
-    public void remove(Long threadID) {
+    public void remove(K key) {
         lock.lock();
         try {
-            tasks.remove(threadID);
+            map.remove(key);
         } finally {
             lock.unlock();
         }
     }
 
-    public Set<Long> keySet() {
-        Set<Long> output = null;
+    public Set<K> keySet() {
+        Set<K> output = null;
         lock.lock();
         try {
-            output = tasks.keySet();
+            output = map.keySet();
+        } finally {
+            lock.unlock();
+        }
+        return output;
+    }
+
+    public boolean containsKey(K key) {
+        boolean output;
+        lock.lock();
+        try {
+            output = map.containsKey(key);
         } finally {
             lock.unlock();
         }
