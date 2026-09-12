@@ -26,7 +26,7 @@ public class MeggoManager {
     private static final GuardedMap<Long, Task> tasks = new GuardedMap<>();
     private static final ChatQueue chatQueue = new ChatQueue();
     private static final ListenerList listeners = new ListenerList();
-    private static final GuardedMap<MeggoEvent, CountDownLatch> listenerLocks = new GuardedMap<>();
+    private static final GuardedMap<MeggoEvent, Ticker> listenerLocks = new GuardedMap<>();
     private static final GuardedMap<MeggoEvent, EventArgs> eventArgsMap = new GuardedMap<>();
     private static final AtomicLong idGenerator = new AtomicLong(0);
 
@@ -38,7 +38,7 @@ public class MeggoManager {
         LOGGER.info("Starting Meggo on OS: {}", System.getProperty("os.name"));
         for (MeggoEvent eventType : MeggoEvent.values()) {
             eventArgsMap.put(eventType, new EventArgs(eventType));
-            listenerLocks.put(eventType, new CountDownLatch(1));
+            listenerLocks.put(eventType, new Ticker());
         }
     }
 
@@ -65,11 +65,8 @@ public class MeggoManager {
         EventArgs eventArgs = eventArgsMap.get(MeggoEvent.CLIENT_CHAT_RECEIVED);
         if (eventArgs != null) {
             eventArgs.message = message;
-            CountDownLatch signal = listenerLocks.get(MeggoEvent.CLIENT_CHAT_RECEIVED);
-            if (signal != null) {
-                signal.countDown();
-                listenerLocks.put(MeggoEvent.CLIENT_CHAT_RECEIVED, new CountDownLatch(1));
-            }
+            Ticker signal = listenerLocks.get(MeggoEvent.CLIENT_CHAT_RECEIVED);
+            if (signal != null) signal.tick();
         }
         return false;
     }
@@ -79,11 +76,8 @@ public class MeggoManager {
         EventArgs eventArgs = eventArgsMap.get(MeggoEvent.CHAT_SCREEN_INPUT);
         if (eventArgs != null) {
             eventArgs.input = input;
-            CountDownLatch signal = listenerLocks.get(MeggoEvent.CHAT_SCREEN_INPUT);
-            if (signal != null) {
-                signal.countDown();
-                listenerLocks.put(MeggoEvent.CHAT_SCREEN_INPUT, new CountDownLatch(1));
-            }
+            Ticker signal = listenerLocks.get(MeggoEvent.CHAT_SCREEN_INPUT);
+            if (signal != null) signal.tick();
         }
     }
 
@@ -92,11 +86,8 @@ public class MeggoManager {
         EventArgs eventArgs = eventArgsMap.get(MeggoEvent.RENDER_PASS_BEGIN);
         if (eventArgs != null) {
             eventArgs.string = string;
-            CountDownLatch signal = listenerLocks.get(MeggoEvent.RENDER_PASS_BEGIN);
-            if (signal != null) {
-                signal.countDown();
-                listenerLocks.put(MeggoEvent.RENDER_PASS_BEGIN, new CountDownLatch(1));
-            }
+            Ticker signal = listenerLocks.get(MeggoEvent.RENDER_PASS_BEGIN);
+            if (signal != null) signal.tick();
         }
     }
 
@@ -108,11 +99,8 @@ public class MeggoManager {
             eventArgs.scanCode = scanCode;
             eventArgs.action = action;
             eventArgs.modifiers = modifiers;
-            CountDownLatch signal = listenerLocks.get(MeggoEvent.KEYBOARD_EVENT);
-            if (signal != null) {
-                signal.countDown();
-                listenerLocks.put(MeggoEvent.KEYBOARD_EVENT, new CountDownLatch(1));
-            }
+            Ticker signal = listenerLocks.get(MeggoEvent.KEYBOARD_EVENT);
+            if (signal != null) signal.tick();
         }
     }
 
@@ -127,11 +115,8 @@ public class MeggoManager {
         EventArgs eventArgs = eventArgsMap.get(MeggoEvent.KEY_INPUT);
         if (eventArgs != null) {
             eventArgs.key = key;
-            CountDownLatch signal = listenerLocks.get(MeggoEvent.KEY_INPUT);
-            if (signal != null) {
-                signal.countDown();
-                listenerLocks.put(MeggoEvent.KEY_INPUT, new CountDownLatch(1));
-            }
+            Ticker signal = listenerLocks.get(MeggoEvent.KEY_INPUT);
+            if (signal != null) signal.tick();
         }
     }
 
@@ -141,11 +126,8 @@ public class MeggoManager {
         if (eventArgs != null) {
             eventArgs.screen = screen;
             eventArgs.key = key;
-            CountDownLatch signal = listenerLocks.get(MeggoEvent.KEYBOARD_KEY_PRESSED);
-            if (signal != null) {
-                signal.countDown();
-                listenerLocks.put(MeggoEvent.KEYBOARD_KEY_PRESSED, new CountDownLatch(1));
-            }
+            Ticker signal = listenerLocks.get(MeggoEvent.KEYBOARD_KEY_PRESSED);
+            if (signal != null) signal.tick();
         }
 
         return false;
@@ -156,11 +138,8 @@ public class MeggoManager {
         EventArgs eventArgs = eventArgsMap.get(MeggoEvent.RENDER_BEGIN);
         if (eventArgs != null) {
             eventArgs.levelRenderContext = levelRenderContext;
-            CountDownLatch signal = listenerLocks.get(MeggoEvent.RENDER_BEGIN);
-            if (signal != null) {
-                signal.countDown();
-                listenerLocks.put(MeggoEvent.RENDER_BEGIN, new CountDownLatch(1));
-            }
+            Ticker signal = listenerLocks.get(MeggoEvent.RENDER_BEGIN);
+            if (signal != null) signal.tick();
         }
     }
 
@@ -168,11 +147,8 @@ public class MeggoManager {
 //        LOGGER.info("Running onRenderEnd...");
         EventArgs eventArgs = eventArgsMap.get(MeggoEvent.RENDER_END);
         if (eventArgs != null) {
-            CountDownLatch signal = listenerLocks.get(MeggoEvent.RENDER_END);
-            if (signal != null) {
-                signal.countDown();
-                listenerLocks.put(MeggoEvent.RENDER_END, new CountDownLatch(1));
-            }
+            Ticker signal = listenerLocks.get(MeggoEvent.RENDER_END);
+            if (signal != null) signal.tick();
         }
     }
 
@@ -185,11 +161,8 @@ public class MeggoManager {
             eventArgs.modifiers = modifiers;
             eventArgs.xpos = xpos;
             eventArgs.ypos = ypos;
-            CountDownLatch signal = listenerLocks.get(MeggoEvent.MOUSE_CLICK);
-            if (signal != null) {
-                signal.countDown();
-                listenerLocks.put(MeggoEvent.MOUSE_CLICK, new CountDownLatch(1));
-            }
+            Ticker signal = listenerLocks.get(MeggoEvent.MOUSE_CLICK);
+            if (signal != null) signal.tick();
         }
     }
 
@@ -199,11 +172,8 @@ public class MeggoManager {
         if (eventArgs != null) {
             eventArgs.world = world;
             eventArgs.chunk = chunk;
-            CountDownLatch signal = listenerLocks.get(MeggoEvent.CHUNK_LOAD);
-            if (signal != null) {
-                signal.countDown();
-                listenerLocks.put(MeggoEvent.CHUNK_LOAD, new CountDownLatch(1));
-            }
+            Ticker signal = listenerLocks.get(MeggoEvent.CHUNK_LOAD);
+            if (signal != null) signal.tick();
         }
     }
 
@@ -213,11 +183,8 @@ public class MeggoManager {
         if (eventArgs != null) {
             eventArgs.world = world;
             eventArgs.chunk = chunk;
-            CountDownLatch signal = listenerLocks.get(MeggoEvent.CHUNK_UNLOAD);
-            if (signal != null) {
-                signal.countDown();
-                listenerLocks.put(MeggoEvent.CHUNK_UNLOAD, new CountDownLatch(1));
-            }
+            Ticker signal = listenerLocks.get(MeggoEvent.CHUNK_UNLOAD);
+            if (signal != null) signal.tick();
         }
     }
 
@@ -227,11 +194,8 @@ public class MeggoManager {
 
         EventArgs eventArgs = eventArgsMap.get(MeggoEvent.CLIENT_WORLD_TICK);
         if (eventArgs != null) {
-            CountDownLatch signal = listenerLocks.get(MeggoEvent.CLIENT_WORLD_TICK);
-            if (signal != null) {
-                signal.countDown();
-                listenerLocks.put(MeggoEvent.CLIENT_WORLD_TICK, new CountDownLatch(1));
-            }
+            Ticker signal = listenerLocks.get(MeggoEvent.CLIENT_WORLD_TICK);
+            if (signal != null) signal.tick();
         }
     }
 
@@ -290,7 +254,6 @@ public class MeggoManager {
         if (parentTask != null && !listeners.contains(uniqueParentID, eventType)) {
             long lid = idGenerator.incrementAndGet();
             listeners.add(uniqueParentID, lid, eventType);
-            print(String.format("Adding new listener: %d %d %s", uniqueParentID, lid, eventType.name()));
             ListenerThread lt = new ListenerThread(uniqueParentID, parentTask.script, eventType);
             Task childTask = Task.createListenTask(
                 uniqueParentID, lid, lt, parentTask.script, eventType
@@ -304,9 +267,7 @@ public class MeggoManager {
         Long lid = listeners.getListenerID(uniqueParentID, eventType);
         listeners.remove(uniqueParentID, eventType);
         Task listenTask = tasks.get(lid);
-        print(String.format("Tried to fetch listenTask %d %d %s", uniqueParentID, lid, listenTask));
         if (listenTask != null) {
-            print(String.format("Attempting to remove listener thread %s", listenTask));
             Thread lt = listenTask.thread;
             tasks.remove(lid);
             lt.interrupt();
@@ -315,7 +276,7 @@ public class MeggoManager {
 
     public static boolean waitForEvent(MeggoEvent eventType) {
         try {
-            CountDownLatch signal = listenerLocks.get(eventType);
+            Ticker signal = listenerLocks.get(eventType);
             if (signal != null) {
                 signal.await();
                 return true;
