@@ -22,44 +22,43 @@ public class ListenerThread extends Thread {
         while (args != null && MeggoManager.waitForEvent(eventType) && !Thread.currentThread().isInterrupted()) {
             switch (eventType) {
                 case CLIENT_CHAT_RECEIVED -> {
-                        MeggoManager.onClientChatReceived(args.message);
+                        script.onClientChatReceived(args.message);
                 }
                 case CHAT_SCREEN_INPUT -> {
-                        MeggoManager.setChatScreenInput(args.input);
+                        script.setChatScreenInput(args.input);
                 }
                 case RENDER_PASS_BEGIN -> {
-                        MeggoManager.onRenderPassBegin(args.string);
+                        script.onRenderPassBegin(args.string);
                 }
-                case KEYBOARD_INPUT -> {
-                        MeggoManager.onKeyboardEvent(args.key, args.scanCode, args.action, args.modifiers);
+                case KEYBOARD_EVENT -> {
+                        script.onKeyboardEvent(args.key, args.scanCode, args.action, args.modifiers);
                 }
                 case KEY_INPUT -> {
-                        MeggoManager.onKeyInput(args.key);
+                        script.onKeyInput(args.key);
                 }
                 case KEYBOARD_KEY_PRESSED -> {
-                        MeggoManager.onKeyboardKeyPressed(args.screen, args.key);
+                        script.onKeyboardKeyPressed(args.screen, args.key);
                 }
                 case RENDER_BEGIN -> {
-                        MeggoManager.onRenderBegin(args.levelRenderContext);
+                        script.onRenderBegin(args.levelRenderContext);
                 }
                 case RENDER_END -> {
-                        MeggoManager.onRenderEnd();
+                        script.onRenderEnd();
                 }
                 case MOUSE_CLICK -> {
-                        MeggoManager.onMouseClick(args.button, args.action, args.modifiers, args.xpos, args.ypos);
+                        script.onMouseClick(args.button, args.action, args.modifiers, args.xpos, args.ypos);
                 }
                 case CHUNK_LOAD -> {
-                        MeggoManager.onChunkLoad(args.world, args.chunk);
+                        script.onChunkLoad(args.world, args.chunk);
                 }
                 case CHUNK_UNLOAD -> {
-                        MeggoManager.onChunkUnload(args.world, args.chunk);
+                        script.onChunkUnload(args.world, args.chunk);
                 }
                 case CLIENT_WORLD_TICK -> {
-                        MeggoManager.onClientWorldTick();
+                        script.onClientWorldTick();
                 }
             }
         }
-
-        // TODO: cleanup thread here
+        MeggoManager.removeListener(uniqueParentID, eventType);
     }
 }

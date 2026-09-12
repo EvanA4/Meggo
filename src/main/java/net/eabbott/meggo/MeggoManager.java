@@ -14,6 +14,7 @@ import org.jspecify.annotations.Nullable;
 
 import java.util.Arrays;
 import java.util.HashMap;
+import java.util.HashSet;
 import java.util.Objects;
 import java.util.concurrent.CountDownLatch;
 import java.util.concurrent.atomic.AtomicLong;
@@ -37,6 +38,7 @@ public class MeggoManager {
         LOGGER.info("Starting Meggo on OS: {}", System.getProperty("os.name"));
         for (MeggoEvent eventType : MeggoEvent.values()) {
             eventArgsMap.put(eventType, new EventArgs(eventType));
+            listenerLocks.put(eventType, new CountDownLatch(1));
         }
     }
 
@@ -60,22 +62,58 @@ public class MeggoManager {
             return true;
         }
 
+        EventArgs eventArgs = eventArgsMap.get(MeggoEvent.CLIENT_CHAT_RECEIVED);
+        if (eventArgs != null) {
+            eventArgs.message = message;
+            CountDownLatch signal = listenerLocks.get(MeggoEvent.CLIENT_CHAT_RECEIVED);
+            if (signal != null) {
+                signal.countDown();
+                listenerLocks.put(MeggoEvent.CLIENT_CHAT_RECEIVED, new CountDownLatch(1));
+            }
+        }
         return false;
     }
 
     public static void setChatScreenInput(EditBox input) {
-        LOGGER.info("Running setChatScreenInput...");
-
+//        LOGGER.info("Running setChatScreenInput...");
+        EventArgs eventArgs = eventArgsMap.get(MeggoEvent.CHAT_SCREEN_INPUT);
+        if (eventArgs != null) {
+            eventArgs.input = input;
+            CountDownLatch signal = listenerLocks.get(MeggoEvent.CHAT_SCREEN_INPUT);
+            if (signal != null) {
+                signal.countDown();
+                listenerLocks.put(MeggoEvent.CHAT_SCREEN_INPUT, new CountDownLatch(1));
+            }
+        }
     }
 
     public static void onRenderPassBegin(String string) {
 //        LOGGER.info("Running onRenderPassBegin...");
-
+        EventArgs eventArgs = eventArgsMap.get(MeggoEvent.RENDER_PASS_BEGIN);
+        if (eventArgs != null) {
+            eventArgs.string = string;
+            CountDownLatch signal = listenerLocks.get(MeggoEvent.RENDER_PASS_BEGIN);
+            if (signal != null) {
+                signal.countDown();
+                listenerLocks.put(MeggoEvent.RENDER_PASS_BEGIN, new CountDownLatch(1));
+            }
+        }
     }
 
     public static void onKeyboardEvent(int key, int scanCode, int action, int modifiers) {
 //        LOGGER.info("Running onKeyboardEvent... {} {} {} {}", key, scanCode, action, modifiers);
-
+        EventArgs eventArgs = eventArgsMap.get(MeggoEvent.KEYBOARD_EVENT);
+        if (eventArgs != null) {
+            eventArgs.key = key;
+            eventArgs.scanCode = scanCode;
+            eventArgs.action = action;
+            eventArgs.modifiers = modifiers;
+            CountDownLatch signal = listenerLocks.get(MeggoEvent.KEYBOARD_EVENT);
+            if (signal != null) {
+                signal.countDown();
+                listenerLocks.put(MeggoEvent.KEYBOARD_EVENT, new CountDownLatch(1));
+            }
+        }
     }
 
     public static void onKeyInput(int key) {
@@ -85,49 +123,133 @@ public class MeggoManager {
         if (screen == null && key == '\\') {
             minecraft.gui.setScreen(new ChatScreen("", /* isDraft= */ false));
         }
+
+        EventArgs eventArgs = eventArgsMap.get(MeggoEvent.KEY_INPUT);
+        if (eventArgs != null) {
+            eventArgs.key = key;
+            CountDownLatch signal = listenerLocks.get(MeggoEvent.KEY_INPUT);
+            if (signal != null) {
+                signal.countDown();
+                listenerLocks.put(MeggoEvent.KEY_INPUT, new CountDownLatch(1));
+            }
+        }
     }
 
     public static boolean onKeyboardKeyPressed(Screen screen, int key) {
-        LOGGER.info("Running onKeyboardKeyPressed...");
+//        LOGGER.info("Running onKeyboardKeyPressed...");
+        EventArgs eventArgs = eventArgsMap.get(MeggoEvent.KEYBOARD_KEY_PRESSED);
+        if (eventArgs != null) {
+            eventArgs.screen = screen;
+            eventArgs.key = key;
+            CountDownLatch signal = listenerLocks.get(MeggoEvent.KEYBOARD_KEY_PRESSED);
+            if (signal != null) {
+                signal.countDown();
+                listenerLocks.put(MeggoEvent.KEYBOARD_KEY_PRESSED, new CountDownLatch(1));
+            }
+        }
+
         return false;
     }
 
     public static void onRenderBegin(LevelRenderContext levelRenderContext) {
 //        LOGGER.info("Running onRenderBegin...");
-
+        EventArgs eventArgs = eventArgsMap.get(MeggoEvent.RENDER_BEGIN);
+        if (eventArgs != null) {
+            eventArgs.levelRenderContext = levelRenderContext;
+            CountDownLatch signal = listenerLocks.get(MeggoEvent.RENDER_BEGIN);
+            if (signal != null) {
+                signal.countDown();
+                listenerLocks.put(MeggoEvent.RENDER_BEGIN, new CountDownLatch(1));
+            }
+        }
     }
 
     public static void onRenderEnd() {
 //        LOGGER.info("Running onRenderEnd...");
-
+        EventArgs eventArgs = eventArgsMap.get(MeggoEvent.RENDER_END);
+        if (eventArgs != null) {
+            CountDownLatch signal = listenerLocks.get(MeggoEvent.RENDER_END);
+            if (signal != null) {
+                signal.countDown();
+                listenerLocks.put(MeggoEvent.RENDER_END, new CountDownLatch(1));
+            }
+        }
     }
 
     public static void onMouseClick(int button, int action, int modifiers, double xpos, double ypos) {
 //        LOGGER.info("Running onMouseClick... {} {} {} {} {}", button, action, modifiers, xpos, ypos);
-
+        EventArgs eventArgs = eventArgsMap.get(MeggoEvent.MOUSE_CLICK);
+        if (eventArgs != null) {
+            eventArgs.button = button;
+            eventArgs.action = action;
+            eventArgs.modifiers = modifiers;
+            eventArgs.xpos = xpos;
+            eventArgs.ypos = ypos;
+            CountDownLatch signal = listenerLocks.get(MeggoEvent.MOUSE_CLICK);
+            if (signal != null) {
+                signal.countDown();
+                listenerLocks.put(MeggoEvent.MOUSE_CLICK, new CountDownLatch(1));
+            }
+        }
     }
 
     public static void onChunkLoad(ClientLevel world, LevelChunk chunk) {
 //        LOGGER.info("Running onChunkLoad...");
-
+        EventArgs eventArgs = eventArgsMap.get(MeggoEvent.CHUNK_LOAD);
+        if (eventArgs != null) {
+            eventArgs.world = world;
+            eventArgs.chunk = chunk;
+            CountDownLatch signal = listenerLocks.get(MeggoEvent.CHUNK_LOAD);
+            if (signal != null) {
+                signal.countDown();
+                listenerLocks.put(MeggoEvent.CHUNK_LOAD, new CountDownLatch(1));
+            }
+        }
     }
 
     public static void onChunkUnload(ClientLevel world, LevelChunk chunk) {
 //        LOGGER.info("Running onChunkUnload...");
-
+        EventArgs eventArgs = eventArgsMap.get(MeggoEvent.CHUNK_UNLOAD);
+        if (eventArgs != null) {
+            eventArgs.world = world;
+            eventArgs.chunk = chunk;
+            CountDownLatch signal = listenerLocks.get(MeggoEvent.CHUNK_UNLOAD);
+            if (signal != null) {
+                signal.countDown();
+                listenerLocks.put(MeggoEvent.CHUNK_UNLOAD, new CountDownLatch(1));
+            }
+        }
     }
 
     public static void onClientWorldTick() {
 //        LOGGER.info("Running onClientWorldTick...");
         chatQueue.flush();
+
+        EventArgs eventArgs = eventArgsMap.get(MeggoEvent.CLIENT_WORLD_TICK);
+        if (eventArgs != null) {
+            CountDownLatch signal = listenerLocks.get(MeggoEvent.CLIENT_WORLD_TICK);
+            if (signal != null) {
+                signal.countDown();
+                listenerLocks.put(MeggoEvent.CLIENT_WORLD_TICK, new CountDownLatch(1));
+            }
+        }
     }
 
     private static void handleMeggoCommand(String[] args) {
         // Check manager commands
         if (Objects.equals(args[0], "tasks")) {
-            print("Current tasks:");
-            for (Long i : tasks.keySet()) {
-                print(String.format("    [%d] %s", i, tasks.get(i)));
+            HashMap<Long, HashMap<MeggoEvent, Long>> snapshot = listeners.copy();
+            if (snapshot != null) {
+                print("Current tasks:");
+                for (Long uniqueParentID : snapshot.keySet()) {
+                    Task runTask = tasks.get(uniqueParentID);
+                    if (runTask != null) {
+                        print(String.format("    [%d] %s", uniqueParentID, runTask.script.name));
+                        for (MeggoEvent eventType : snapshot.get(uniqueParentID).keySet()) {
+                            print(String.format("        [%d] %s", snapshot.get(uniqueParentID).get(eventType), eventType.name()));
+                        }
+                    }
+                }
             }
         }
 
@@ -141,16 +263,16 @@ public class MeggoManager {
         }
     }
 
-    public static void addScript(Class<? extends MeggoScript> script) {
-        scripts.put(script.getName(), script);
+    public static void addScript(String name, Class<? extends MeggoScript> script) {
+        scripts.put(name, script);
     }
 
     // FUNCTIONS BELOW CAN ONLY BE RUN BY SECONDARY THREADS
 
     public static void runScript(String name, String[] args) {
+        long rid = idGenerator.incrementAndGet();
         try {
-            MeggoScript env = scripts.get(name).getDeclaredConstructor().newInstance();
-            long rid = idGenerator.incrementAndGet();
+            MeggoScript env = scripts.get(name).getDeclaredConstructor(Long.class, String.class).newInstance(rid, name);
             Task task = Task.createRunTask(rid, Thread.currentThread(), env);
             tasks.put(rid, task);
             env.run(args);
@@ -159,8 +281,7 @@ public class MeggoManager {
             print(String.format("Failed to start task for \"%s\": %s", name, e.getMessage()));
 
         } finally {
-            Long threadID = Thread.currentThread().threadId();
-            tasks.remove(threadID);
+            tasks.remove(rid);
         }
     }
 
@@ -169,9 +290,10 @@ public class MeggoManager {
         if (parentTask != null && !listeners.contains(uniqueParentID, eventType)) {
             long lid = idGenerator.incrementAndGet();
             listeners.add(uniqueParentID, lid, eventType);
+            print(String.format("Adding new listener: %d %d %s", uniqueParentID, lid, eventType.name()));
             ListenerThread lt = new ListenerThread(uniqueParentID, parentTask.script, eventType);
             Task childTask = Task.createListenTask(
-                    uniqueParentID, lid, lt, parentTask.script, eventType
+                uniqueParentID, lid, lt, parentTask.script, eventType
             );
             tasks.put(lid, childTask);
             lt.start();
@@ -179,7 +301,16 @@ public class MeggoManager {
     }
 
     public static void removeListener(Long uniqueParentID, MeggoEvent eventType) {
-
+        Long lid = listeners.getListenerID(uniqueParentID, eventType);
+        listeners.remove(uniqueParentID, eventType);
+        Task listenTask = tasks.get(lid);
+        print(String.format("Tried to fetch listenTask %d %d %s", uniqueParentID, lid, listenTask));
+        if (listenTask != null) {
+            print(String.format("Attempting to remove listener thread %s", listenTask));
+            Thread lt = listenTask.thread;
+            tasks.remove(lid);
+            lt.interrupt();
+        }
     }
 
     public static boolean waitForEvent(MeggoEvent eventType) {
@@ -243,39 +374,8 @@ public class MeggoManager {
 * */
 
 /*
- * What do I need?
- * - Scripts should not be stored by instance but by class
- * - Store threads in hierarchy:
- *   - Main thread + dynamic list of event listener threads
- * - Script class has abstract boolean canMovePlayer (call these "motor scripts/threads")
- *   - Throw error in main thread if trying to call one motor script while currently running another
- * - Manager needs a registerListener method
- *   - Spawn new thread
- *
- *
- * hashmap
- *   - thread ID to script object, and role (ex. tick_listener, runner, etc.)
- * killing
- *   - killing runner thread should kill all listener threads
- *   - killing listener thread should not kill runner thread
- *   - figure out if can kill by TID, or if need thread object in hashmap
- *      - if need object, must spawn listener threads creatively without executor?
- * registering listeners
- *   - runner thread calls registerListener(runnerID, eventName)
- *   - executor => threads[rid].script.corresponding
- *
- * listeners need to be signaled, use CountDownLatch signal = new CountDownLatch(1);
- *  - might need shared memory
- *      - map listener thread to event arg storage
- *  - calling signal again before child is waiting does not do anything, child must wait till next cycle
- *      - good solution, alternative is semaphore which would let child run at max speed until caught up with parent
- * - while not interrupted, keep calling env's listener with shared memory
- *
- * runner threads need a unique identifier from AtomicLong
- *  - created runner thread has unique ID in Task map
- *      - in lifetime of thread, listeners are registered under unique parent ID
- *          - listener threads are created with uniqueParentID, scriptEnvironment, eventType
- *          - listeners stored in listener list under unique ID
- *  - when runner dies, Task map has runner task removed
- *  - during runner lifetime or after, either runner kills child itself or child kills itself
+ * render event listeners should execute on main thread
+ * scripts should specify whether they're motor scripts
+ *      throw error if trying to start a motor script while another is live
+ *             that includes any event listeners
  * */

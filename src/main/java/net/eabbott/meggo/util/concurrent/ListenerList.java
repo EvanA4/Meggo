@@ -1,6 +1,5 @@
 package net.eabbott.meggo.util.concurrent;
 
-import net.eabbott.meggo.Meggo;
 import net.eabbott.meggo.MeggoEvent;
 import org.jspecify.annotations.Nullable;
 
@@ -11,6 +10,18 @@ import java.util.concurrent.locks.ReentrantLock;
 public class ListenerList {
     private final HashMap<Long, HashMap<MeggoEvent, Long>> pidToListeners = new HashMap<>();
     private final ReentrantLock lock = new ReentrantLock();
+
+    public @Nullable HashMap<Long, HashMap<MeggoEvent, Long>> copy() {
+        HashMap<Long, HashMap<MeggoEvent, Long>> output = null;
+        lock.lock();
+        try {
+            output = new HashMap<Long, HashMap<MeggoEvent, Long>>(pidToListeners);
+
+        } finally {
+            lock.unlock();
+        }
+        return output;
+    }
 
     public @Nullable Long getListenerID(Long uniqueParentID, MeggoEvent eventType) {
         Long output = null;

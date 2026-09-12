@@ -4,9 +4,8 @@ import net.eabbott.meggo.MeggoManager;
 import net.eabbott.meggo.MeggoScript;
 
 public class ArgsScript extends MeggoScript {
-    @Override
-    public String getName() {
-        return "example";
+    public ArgsScript(Long runnerID, String name) {
+        super(runnerID, name);
     }
 
     @Override
@@ -16,6 +15,4 @@ public class ArgsScript extends MeggoScript {
             MeggoManager.print(String.format("    [%d]: \"%s\"", i, args[i]));
         }
     }
-
-    public MeggoScript
 }

@@ -18,8 +18,8 @@ public class MeggoClient implements ClientModInitializer  {
         ClientChunkEvents.CHUNK_UNLOAD.register(MeggoManager::onChunkUnload);
 
         MeggoManager.init();
-        MeggoManager.addScript(ArgsScript.class);
-        MeggoManager.addScript(SleepScript.class);
+        MeggoManager.addScript("args", ArgsScript.class);
+        MeggoManager.addScript("sleep", SleepScript.class);
 
         ClientTickEvents.START_LEVEL_TICK.register(world -> MeggoManager.onClientWorldTick());
         ScreenEvents.AFTER_INIT.register(this::afterInitScreen);

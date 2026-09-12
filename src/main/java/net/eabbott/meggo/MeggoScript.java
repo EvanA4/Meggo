@@ -8,7 +8,9 @@ import net.minecraft.network.chat.Component;
 import net.minecraft.world.level.chunk.LevelChunk;
 
 public abstract class MeggoScript {
-    public abstract String getName();
+    public Long runnerID;
+    public String name;
+    public MeggoScript(Long runnerID, String name) { this.runnerID = runnerID; this.name = name; }
     public abstract void run(String[] args);
 
     public void onClientChatReceived(Component message) {}
@@ -23,4 +25,12 @@ public abstract class MeggoScript {
     public void onChunkLoad(ClientLevel world, LevelChunk chunk) {}
     public void onChunkUnload(ClientLevel world, LevelChunk chunk) {}
     public void onClientWorldTick() {}
+
+    public void addListener(MeggoEvent event) {
+        MeggoManager.addListener(runnerID, event);
+    }
+
+    public void removeListener(MeggoEvent event) {
+        MeggoManager.removeListener(runnerID, event);
+    }
 }
