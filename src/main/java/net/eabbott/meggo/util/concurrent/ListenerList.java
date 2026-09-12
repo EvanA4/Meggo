@@ -11,11 +11,23 @@ public class ListenerList {
     private final HashMap<Long, HashMap<MeggoEvent, Long>> pidToListeners = new HashMap<>();
     private final ReentrantLock lock = new ReentrantLock();
 
-    public @Nullable HashMap<Long, HashMap<MeggoEvent, Long>> copy() {
-        HashMap<Long, HashMap<MeggoEvent, Long>> output = null;
+    public HashMap<Long, HashMap<MeggoEvent, Long>> snapshot() {
+        HashMap<Long, HashMap<MeggoEvent, Long>> output;
         lock.lock();
         try {
-            output = new HashMap<Long, HashMap<MeggoEvent, Long>>(pidToListeners);
+            output = new HashMap<>(pidToListeners);
+
+        } finally {
+            lock.unlock();
+        }
+        return output;
+    }
+
+    public boolean hasListeners(Long uniqueParentID) {
+        boolean output;
+        lock.lock();
+        try {
+            output = pidToListeners.containsKey(uniqueParentID);
 
         } finally {
             lock.unlock();

@@ -1,7 +1,6 @@
 package net.eabbott.meggo;
 
-import net.eabbott.meggo.scripts.ArgsScript;
-import net.eabbott.meggo.scripts.SleepScript;
+import net.eabbott.meggo.scripts.*;
 import net.fabricmc.api.ClientModInitializer;
 import net.fabricmc.fabric.api.client.event.lifecycle.v1.ClientChunkEvents;
 import net.fabricmc.fabric.api.client.event.lifecycle.v1.ClientTickEvents;
@@ -20,6 +19,10 @@ public class MeggoClient implements ClientModInitializer  {
         MeggoManager.init();
         MeggoManager.addScript("args", ArgsScript.class);
         MeggoManager.addScript("sleep", SleepScript.class);
+        MeggoManager.addScript("listen", ListenScript.class);
+        MeggoManager.addScript("zombie", ZombieScript.class);
+        MeggoManager.addScript("motor", MotorScript.class);
+        MeggoManager.addScript("findPath", FindPathScript.class);
 
         ClientTickEvents.START_LEVEL_TICK.register(world -> MeggoManager.onClientWorldTick());
         ScreenEvents.AFTER_INIT.register(this::afterInitScreen);

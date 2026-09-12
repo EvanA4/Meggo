@@ -59,6 +59,6 @@ public class ListenerThread extends Thread {
                 }
             }
         }
-        MeggoManager.removeListener(uniqueParentID, eventType);
+        MeggoManager.freeListener(uniqueParentID, eventType);
     }
 }

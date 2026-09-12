@@ -12,6 +12,8 @@ public abstract class MeggoScript {
     public String name;
     public MeggoScript(Long runnerID, String name) { this.runnerID = runnerID; this.name = name; }
     public abstract void run(String[] args);
+    public abstract void render(LevelRenderContext levelRenderContext);
+    public abstract boolean isMotor();
 
     public void onClientChatReceived(Component message) {}
     public void setChatScreenInput(EditBox input) {}
@@ -29,8 +31,7 @@ public abstract class MeggoScript {
     public void addListener(MeggoEvent event) {
         MeggoManager.addListener(runnerID, event);
     }
-
     public void removeListener(MeggoEvent event) {
-        MeggoManager.removeListener(runnerID, event);
+        MeggoManager.interruptListener(runnerID, event);
     }
 }

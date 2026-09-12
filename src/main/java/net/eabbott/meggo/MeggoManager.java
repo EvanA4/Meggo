@@ -12,10 +12,7 @@ import net.minecraft.network.chat.Component;
 import net.minecraft.world.level.chunk.LevelChunk;
 import org.jspecify.annotations.Nullable;
 
-import java.util.Arrays;
-import java.util.HashMap;
-import java.util.HashSet;
-import java.util.Objects;
+import java.util.*;
 import java.util.concurrent.CountDownLatch;
 import java.util.concurrent.atomic.AtomicLong;
 
@@ -29,6 +26,8 @@ public class MeggoManager {
     private static final GuardedMap<MeggoEvent, Ticker> listenerLocks = new GuardedMap<>();
     private static final GuardedMap<MeggoEvent, EventArgs> eventArgsMap = new GuardedMap<>();
     private static final AtomicLong idGenerator = new AtomicLong(0);
+    private static final HashSet<Long> runnerIDs = new HashSet<>();
+    private static Long motorID = -1L;
 
     public static void print(String text) {
         chatQueue.push(text);
@@ -72,7 +71,6 @@ public class MeggoManager {
     }
 
     public static void setChatScreenInput(EditBox input) {
-//        LOGGER.info("Running setChatScreenInput...");
         EventArgs eventArgs = eventArgsMap.get(MeggoEvent.CHAT_SCREEN_INPUT);
         if (eventArgs != null) {
             eventArgs.input = input;
@@ -82,7 +80,6 @@ public class MeggoManager {
     }
 
     public static void onRenderPassBegin(String string) {
-//        LOGGER.info("Running onRenderPassBegin...");
         EventArgs eventArgs = eventArgsMap.get(MeggoEvent.RENDER_PASS_BEGIN);
         if (eventArgs != null) {
             eventArgs.string = string;
@@ -92,7 +89,6 @@ public class MeggoManager {
     }
 
     public static void onKeyboardEvent(int key, int scanCode, int action, int modifiers) {
-//        LOGGER.info("Running onKeyboardEvent... {} {} {} {}", key, scanCode, action, modifiers);
         EventArgs eventArgs = eventArgsMap.get(MeggoEvent.KEYBOARD_EVENT);
         if (eventArgs != null) {
             eventArgs.key = key;
@@ -105,7 +101,6 @@ public class MeggoManager {
     }
 
     public static void onKeyInput(int key) {
-//        LOGGER.info("Running onKeyInput... {}", key);
         var minecraft = Minecraft.getInstance();
         var screen = minecraft.gui.screen();
         if (screen == null && key == '\\') {
@@ -121,7 +116,6 @@ public class MeggoManager {
     }
 
     public static boolean onKeyboardKeyPressed(Screen screen, int key) {
-//        LOGGER.info("Running onKeyboardKeyPressed...");
         EventArgs eventArgs = eventArgsMap.get(MeggoEvent.KEYBOARD_KEY_PRESSED);
         if (eventArgs != null) {
             eventArgs.screen = screen;
@@ -134,7 +128,13 @@ public class MeggoManager {
     }
 
     public static void onRenderBegin(LevelRenderContext levelRenderContext) {
-//        LOGGER.info("Running onRenderBegin...");
+        for (Long runnerID : runnerIDs) {
+            Task runTask = tasks.get(runnerID);
+            if (runTask != null) {
+                runTask.script.render(levelRenderContext);
+            }
+        }
+
         EventArgs eventArgs = eventArgsMap.get(MeggoEvent.RENDER_BEGIN);
         if (eventArgs != null) {
             eventArgs.levelRenderContext = levelRenderContext;
@@ -144,7 +144,6 @@ public class MeggoManager {
     }
 
     public static void onRenderEnd() {
-//        LOGGER.info("Running onRenderEnd...");
         EventArgs eventArgs = eventArgsMap.get(MeggoEvent.RENDER_END);
         if (eventArgs != null) {
             Ticker signal = listenerLocks.get(MeggoEvent.RENDER_END);
@@ -153,7 +152,6 @@ public class MeggoManager {
     }
 
     public static void onMouseClick(int button, int action, int modifiers, double xpos, double ypos) {
-//        LOGGER.info("Running onMouseClick... {} {} {} {} {}", button, action, modifiers, xpos, ypos);
         EventArgs eventArgs = eventArgsMap.get(MeggoEvent.MOUSE_CLICK);
         if (eventArgs != null) {
             eventArgs.button = button;
@@ -167,7 +165,6 @@ public class MeggoManager {
     }
 
     public static void onChunkLoad(ClientLevel world, LevelChunk chunk) {
-//        LOGGER.info("Running onChunkLoad...");
         EventArgs eventArgs = eventArgsMap.get(MeggoEvent.CHUNK_LOAD);
         if (eventArgs != null) {
             eventArgs.world = world;
@@ -178,7 +175,6 @@ public class MeggoManager {
     }
 
     public static void onChunkUnload(ClientLevel world, LevelChunk chunk) {
-//        LOGGER.info("Running onChunkUnload...");
         EventArgs eventArgs = eventArgsMap.get(MeggoEvent.CHUNK_UNLOAD);
         if (eventArgs != null) {
             eventArgs.world = world;
@@ -189,7 +185,6 @@ public class MeggoManager {
     }
 
     public static void onClientWorldTick() {
-//        LOGGER.info("Running onClientWorldTick...");
         chatQueue.flush();
 
         EventArgs eventArgs = eventArgsMap.get(MeggoEvent.CLIENT_WORLD_TICK);
@@ -199,22 +194,80 @@ public class MeggoManager {
         }
     }
 
-    private static void handleMeggoCommand(String[] args) {
-        // Check manager commands
-        if (Objects.equals(args[0], "tasks")) {
-            HashMap<Long, HashMap<MeggoEvent, Long>> snapshot = listeners.copy();
-            if (snapshot != null) {
-                print("Current tasks:");
-                for (Long uniqueParentID : snapshot.keySet()) {
-                    Task runTask = tasks.get(uniqueParentID);
-                    if (runTask != null) {
-                        print(String.format("    [%d] %s", uniqueParentID, runTask.script.name));
-                        for (MeggoEvent eventType : snapshot.get(uniqueParentID).keySet()) {
-                            print(String.format("        [%d] %s", snapshot.get(uniqueParentID).get(eventType), eventType.name()));
-                        }
+    private static void printTasks() {
+        HashMap<Long, HashMap<MeggoEvent, Long>> snapshot = listeners.snapshot();
+        HashSet<Long> deadRunners = new HashSet<>(snapshot.keySet());
+        deadRunners.removeAll(runnerIDs);
+
+        // Display living runners first
+        print("Current tasks:");
+        for (Long runnerID : runnerIDs) {
+            Task runTask = tasks.get(runnerID);
+            if (runTask != null) {
+                print(String.format("    [%d] %s", runnerID, runTask.script.name));
+                if (snapshot.containsKey(runnerID)) {
+                    for (MeggoEvent eventType : snapshot.get(runnerID).keySet()) {
+                        print(String.format(
+                            "        [%d] %s", snapshot.get(runnerID).get(eventType), eventType.name())
+                        );
                     }
                 }
             }
+        }
+
+        // Display zombies after
+        for (Long deadRunnerID : deadRunners) {
+            print(String.format("    [%d] %s", deadRunnerID, "terminated"));
+            for (MeggoEvent eventType : snapshot.get(deadRunnerID).keySet()) {
+                print(String.format(
+                    "        [%d] %s", snapshot.get(deadRunnerID).get(eventType), eventType.name())
+                );
+            }
+        }
+    }
+
+    private static void interruptThread(Long uniqueID) {
+        Task task = tasks.get(uniqueID);
+        if (task != null) {
+            task.thread.interrupt();
+        } else {
+            print(String.format("Warning: task does not exist with ID %d", uniqueID));
+        }
+    }
+
+    private static void help() {
+        print("Built-in commands:");
+        print("    \\tasks");
+        print("        Prints the running threads to the client-side chat.");
+        print("    \\interrupt <threadID>");
+        print("        Interrupts the thread of the same ID, asking it to quit safely.");
+        print("    \\help");
+        print("        Prints the available commands/scripts in client-side chat.");
+
+        print("Scripts:");
+        for (String name : scripts.keySet()) {
+            print(String.format("    %s", name));
+        }
+    }
+
+    private static void handleMeggoCommand(String[] args) {
+        // Check manager commands
+        if (Objects.equals(args[0], "tasks")) {
+            printTasks();
+
+        } else if (Objects.equals(args[0], "interrupt")) {
+            if (args.length != 2) {
+                print("usage: \\interrupt <threadID>");
+            } else {
+                try {
+                    interruptThread(Long.parseLong(args[1]));
+                } catch (Exception e) {
+                    print("usage: \\interrupt <threadID>");
+                }
+            }
+
+        } else if (Objects.equals(args[0], "help")) {
+            help();
         }
 
         // Check non-manager commands
@@ -236,9 +289,24 @@ public class MeggoManager {
     public static void runScript(String name, String[] args) {
         long rid = idGenerator.incrementAndGet();
         try {
-            MeggoScript env = scripts.get(name).getDeclaredConstructor(Long.class, String.class).newInstance(rid, name);
+            MeggoScript env = scripts.get(name)
+                    .getDeclaredConstructor(Long.class, String.class).newInstance(rid, name);
+
+            // check for motor collision
+            if (env.isMotor()) {
+                if (
+                    motorID == -1 || !(tasks.containsKey(motorID) || listeners.hasListeners(motorID))
+                ) {
+                    motorID = rid;
+                } else {
+                    // motor collision detected
+                    throw new Exception("Motor collision detected!");
+                }
+            }
+
             Task task = Task.createRunTask(rid, Thread.currentThread(), env);
             tasks.put(rid, task);
+            runnerIDs.add(rid);
             env.run(args);
 
         } catch (Exception e) {
@@ -246,6 +314,7 @@ public class MeggoManager {
 
         } finally {
             tasks.remove(rid);
+            runnerIDs.remove(rid);
         }
     }
 
@@ -263,14 +332,22 @@ public class MeggoManager {
         }
     }
 
-    public static void removeListener(Long uniqueParentID, MeggoEvent eventType) {
+    public static void interruptListener(Long uniqueParentID, MeggoEvent eventType) {
         Long lid = listeners.getListenerID(uniqueParentID, eventType);
-        listeners.remove(uniqueParentID, eventType);
-        Task listenTask = tasks.get(lid);
-        if (listenTask != null) {
-            Thread lt = listenTask.thread;
+        if (lid != null) {
+            Task listenTask = tasks.get(lid);
+            if (listenTask != null) {
+                Thread lt = listenTask.thread;
+                lt.interrupt();
+            }
+        }
+    }
+
+    public static void freeListener(Long uniqueParentID, MeggoEvent eventType) {
+        Long lid = listeners.getListenerID(uniqueParentID, eventType);
+        if (lid != null) {
+            listeners.remove(uniqueParentID, eventType);
             tasks.remove(lid);
-            lt.interrupt();
         }
     }
 
@@ -294,49 +371,5 @@ public class MeggoManager {
 }
 
 /*
-    BlockPos blockPos = MeggoUtil.getTargetedBlock(64);
-    if (blockPos != null) {
-        echo(String.format(
-                "    Target block: %d %d %d",
-                blockPos.getX(),
-                blockPos.getY(),
-                blockPos.getZ())
-        );
-    }
-
-    Iterable<Entity> entities = MeggoUtil.getEntities();
-    if (entities != null) {
-        int ctr = 0;
-        for (Entity entity : entities) {
-            if (ctr == 5) break;
-            echo(String.format("    %s at %f %f %f", entity.getName().toString(), entity.getX(), entity.getY(), entity.getZ()));
-            ++ctr;
-        }
-    }
-
-    if (blockPos != null) {
-        PATH_TO_RENDER = MeggoUtil.getPath(blockPos);
-    }
-
-
-
-
-    var color       = ARGB.color(0, 0, 200, 255);
-    var fill_color  = ARGB.color(50,  0, 200, 255);
-    var filled      = GizmoStyle.strokeAndFill(color, 1.5f, fill_color);
-
-    if (PATH_TO_RENDER != null) {
-        for (int i = 0; i < PATH_TO_RENDER.getNodeCount(); ++i) {
-            Node node = PATH_TO_RENDER.getNode(i);
-            var box = new AABB(new BlockPos(node.x, node.y, node.z));
-            Gizmos.cuboid(box, filled).setAlwaysOnTop();
-        }
-    }
-* */
-
-/*
- * render event listeners should execute on main thread
- * scripts should specify whether they're motor scripts
- *      throw error if trying to start a motor script while another is live
- *             that includes any event listeners
+ * render functions should execute on main thread
  * */
