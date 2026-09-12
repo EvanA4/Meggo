@@ -43,7 +43,6 @@ public class MeggoManager {
 
     public static boolean onClientChatReceived(Component message) {
         String text = message.getString();
-        LOGGER.info("Running onClientChatReceived... \"{}\"", text);
         if (text.isEmpty()) return false;
 
         String[] words = text.split(" ");
@@ -371,5 +370,5 @@ public class MeggoManager {
 }
 
 /*
- * render functions should execute on main thread
+ * create functions to move player
  * */

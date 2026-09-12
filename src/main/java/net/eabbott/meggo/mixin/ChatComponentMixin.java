@@ -17,8 +17,6 @@ import org.spongepowered.asm.mixin.injection.callback.CallbackInfo;
 
 @Mixin(ChatComponent.class)
 public class ChatComponentMixin {
-  private static final Logger LOGGER = LoggerFactory.getLogger("ChatComponentMixin");
-
   @Inject(
       at = @At("HEAD"),
       method = "addClientSystemMessage(Lnet/minecraft/network/chat/Component;)V",

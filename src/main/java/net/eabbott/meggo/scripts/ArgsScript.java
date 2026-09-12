@@ -3,6 +3,8 @@ package net.eabbott.meggo.scripts;
 import net.eabbott.meggo.MeggoManager;
 import net.eabbott.meggo.MeggoScript;
 import net.eabbott.meggo.dataclasses.LevelRenderContext;
+import net.minecraft.client.Minecraft;
+import net.minecraft.client.player.LocalPlayer;
 
 public class ArgsScript extends MeggoScript {
     public boolean isMotor = false;
