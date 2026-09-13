@@ -3,11 +3,16 @@ package net.eabbott.meggo;
 import net.eabbott.meggo.dataclasses.EventArgs;
 import net.eabbott.meggo.dataclasses.LevelRenderContext;
 import net.eabbott.meggo.util.concurrent.*;
+import net.eabbott.meggo.util.movement.ForcedClientInput;
+import net.eabbott.meggo.util.movement.MeggoInput;
+import net.eabbott.meggo.util.movement.PlayerMover;
 import net.minecraft.client.Minecraft;
 import net.minecraft.client.gui.components.EditBox;
 import net.minecraft.client.gui.screens.ChatScreen;
 import net.minecraft.client.gui.screens.Screen;
 import net.minecraft.client.multiplayer.ClientLevel;
+import net.minecraft.client.player.KeyboardInput;
+import net.minecraft.client.player.LocalPlayer;
 import net.minecraft.network.chat.Component;
 import net.minecraft.world.level.chunk.LevelChunk;
 import org.jspecify.annotations.Nullable;
@@ -28,6 +33,7 @@ public class MeggoManager {
     private static final AtomicLong idGenerator = new AtomicLong(0);
     private static final HashSet<Long> runnerIDs = new HashSet<>();
     private static Long motorID = -1L;
+    private static PlayerMover playerMover = new PlayerMover();
 
     public static void print(String text) {
         chatQueue.push(text);
@@ -296,6 +302,7 @@ public class MeggoManager {
                 if (
                     motorID == -1 || !(tasks.containsKey(motorID) || listeners.hasListeners(motorID))
                 ) {
+                    toggleMovement(true);
                     motorID = rid;
                 } else {
                     // motor collision detected
@@ -312,6 +319,7 @@ public class MeggoManager {
             print(String.format("Failed to start task for \"%s\": %s", name, e.getMessage()));
 
         } finally {
+            toggleMovement(false);
             tasks.remove(rid);
             runnerIDs.remove(rid);
         }
@@ -366,6 +374,22 @@ public class MeggoManager {
 
     public static @Nullable EventArgs getEventArgs(MeggoEvent eventType) {
         return eventArgsMap.get(eventType);
+    }
+
+    private static void toggleMovement(boolean locked) {
+        Minecraft mc = Minecraft.getInstance();
+        if (mc.player != null) {
+            if (locked) {
+                playerMover = new PlayerMover();
+                mc.player.input = new ForcedClientInput(playerMover);
+            } else {
+                mc.player.input = new KeyboardInput(mc.options);
+            }
+        }
+    }
+
+    public static void setInput(MeggoInput input, boolean enabled) {
+        playerMover.setInput(input, enabled);
     }
 }
 
