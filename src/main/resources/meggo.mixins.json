@@ -8,7 +8,8 @@
 		"FrameGraphBuilderMixin",
 		"KeyboardHandlerMixin",
 		"LevelRendererMixin",
-		"MouseHandlerMixin"
+		"MouseHandlerMixin",
+		"GuiMixin"
 	],
 	"injectors": {
 		"defaultRequire": 1

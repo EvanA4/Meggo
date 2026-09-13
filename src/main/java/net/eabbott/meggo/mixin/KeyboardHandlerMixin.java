@@ -6,6 +6,7 @@ package net.eabbott.meggo.mixin;
 import net.eabbott.meggo.MeggoManager;
 import net.minecraft.client.KeyboardHandler;
 import net.minecraft.client.Minecraft;
+import net.minecraft.client.gui.screens.ChatScreen;
 import net.minecraft.client.input.KeyEvent;
 import org.spongepowered.asm.mixin.Mixin;
 import org.spongepowered.asm.mixin.injection.At;
@@ -23,6 +24,13 @@ public class KeyboardHandlerMixin {
       method = "keyPress(JILnet/minecraft/client/input/KeyEvent;)V",
       cancellable = true)
   private void keyPress(long window, int action, KeyEvent event, CallbackInfo ci) {
+    Minecraft mc = Minecraft.getInstance();
+    boolean isChatKey = mc.options.keyChat.matches(event);
+    boolean isEscapeKey = event.isEscape();
+    boolean isF5 = mc.options.keyTogglePerspective.matches(event);
+    boolean isChatOpened = mc.gui.screen() instanceof ChatScreen;
+    if (MeggoManager.getIsInputLocked() && !isChatOpened && !isChatKey && !isEscapeKey && !isF5) ci.cancel();
+
     int key = event.key();
     int scanCode = event.scancode();
     int modifiers = event.modifiers();

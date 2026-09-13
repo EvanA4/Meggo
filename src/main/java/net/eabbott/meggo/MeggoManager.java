@@ -32,7 +32,8 @@ public class MeggoManager {
     private static final AtomicLong idGenerator = new AtomicLong(0);
     private static final HashSet<Long> runnerIDs = new HashSet<>();
     private static Long motorID = -1L;
-    private static PlayerMover playerMover = new PlayerMover();
+    private static boolean isInputLocked = false;
+    public static PlayerMover playerMover = new PlayerMover();
 
     public static void print(String text) {
         chatQueue.push(text);
@@ -288,6 +289,23 @@ public class MeggoManager {
         scripts.put(name, script);
     }
 
+    public static boolean isMotorScriptRunning() {
+        return motorID != -1 && (tasks.containsKey(motorID) || listeners.hasListeners(motorID));
+    }
+
+    public static boolean getIsInputLocked() {
+        return isInputLocked;
+    }
+
+    public static void interruptAllTasks() {
+        for (Long uniqueID : tasks.keySet()) {
+            Task task = tasks.get(uniqueID);
+            if (task != null) {
+                task.thread.interrupt();
+            }
+        }
+    }
+
     // FUNCTIONS BELOW CAN ONLY BE RUN BY SECONDARY THREADS
 
     public static void runScript(String name, String[] args) {
@@ -298,9 +316,7 @@ public class MeggoManager {
 
             // check for motor collision
             if (env.isMotor()) {
-                if (
-                    motorID == -1 || !(tasks.containsKey(motorID) || listeners.hasListeners(motorID))
-                ) {
+                if (!isMotorScriptRunning()) {
                     toggleMovement(true);
                     motorID = rid;
                 } else {
@@ -318,7 +334,9 @@ public class MeggoManager {
             print(String.format("Failed to start task for \"%s\": %s", name, e.getMessage()));
 
         } finally {
-            toggleMovement(false);
+            if (!listeners.hasListeners(rid)) {
+                toggleMovement(false);
+            }
             tasks.remove(rid);
             runnerIDs.remove(rid);
         }
@@ -355,6 +373,11 @@ public class MeggoManager {
             listeners.remove(uniqueParentID, eventType);
             tasks.remove(lid);
         }
+
+        // if last listener removed, allow movement
+        if (!listeners.hasListeners(uniqueParentID)) {
+            toggleMovement(false);
+        }
     }
 
     public static boolean waitForEvent(MeggoEvent eventType) {
@@ -384,27 +407,8 @@ public class MeggoManager {
             } else {
                 mc.player.input = new KeyboardInput(mc.options);
             }
+            isInputLocked = locked;
         }
-    }
-
-    public static void setInput(MeggoInput input, boolean enabled) {
-        playerMover.setInput(input, enabled);
-    }
-
-    public static void setView(float xRot, float yRot) {
-        Minecraft mc = Minecraft.getInstance();
-        if (mc.player != null) {
-            mc.player.setXRot(xRot);
-            mc.player.setYRot(yRot);
-        }
-    }
-
-    public static @Nullable Vec2 getView() {
-        Minecraft mc = Minecraft.getInstance();
-        if (mc.player != null) {
-            return new Vec2(mc.player.getXRot(), mc.player.getYRot());
-        }
-        return null;
     }
 }
 
