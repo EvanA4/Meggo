@@ -3,10 +3,8 @@ package net.eabbott.meggo.scripts;
 import net.eabbott.meggo.MeggoManager;
 import net.eabbott.meggo.MeggoScript;
 import net.eabbott.meggo.dataclasses.LevelRenderContext;
-import net.eabbott.meggo.util.movement.ForcedClientInput;
-import net.eabbott.meggo.util.movement.MeggoInput;
-import net.minecraft.client.Minecraft;
-import net.minecraft.client.player.LocalPlayer;
+import net.eabbott.meggo.util.input.MeggoInput;
+import net.minecraft.world.phys.Vec2;
 
 public class MoveScript extends MeggoScript {
     public MoveScript(Long runnerID, String name) {
@@ -32,6 +30,11 @@ public class MoveScript extends MeggoScript {
 
         try {
             MeggoManager.setInput(input, true);
+            Vec2 view = MeggoManager.getView();
+            if (view != null) {
+                MeggoManager.print(String.format("Facing: (%f, %f)", view.x, view.y));
+            }
+            MeggoManager.setView(45, 123); // +x looks down, +y looks right
             Thread.sleep(toWait);
         } catch (InterruptedException e) {
             MeggoManager.print("Sleeping interrupted!");

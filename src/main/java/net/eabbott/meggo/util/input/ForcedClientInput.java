@@ -1,9 +1,7 @@
-package net.eabbott.meggo.util.movement;
+package net.eabbott.meggo.util.input;
 
 import net.minecraft.client.player.ClientInput;
 import net.minecraft.world.phys.Vec2;
-
-import java.util.HashMap;
 
 public class ForcedClientInput extends ClientInput {
     PlayerMover playerMover;

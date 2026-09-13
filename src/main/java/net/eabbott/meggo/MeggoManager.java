@@ -3,22 +3,21 @@ package net.eabbott.meggo;
 import net.eabbott.meggo.dataclasses.EventArgs;
 import net.eabbott.meggo.dataclasses.LevelRenderContext;
 import net.eabbott.meggo.util.concurrent.*;
-import net.eabbott.meggo.util.movement.ForcedClientInput;
-import net.eabbott.meggo.util.movement.MeggoInput;
-import net.eabbott.meggo.util.movement.PlayerMover;
+import net.eabbott.meggo.util.input.ForcedClientInput;
+import net.eabbott.meggo.util.input.MeggoInput;
+import net.eabbott.meggo.util.input.PlayerMover;
 import net.minecraft.client.Minecraft;
 import net.minecraft.client.gui.components.EditBox;
 import net.minecraft.client.gui.screens.ChatScreen;
 import net.minecraft.client.gui.screens.Screen;
 import net.minecraft.client.multiplayer.ClientLevel;
 import net.minecraft.client.player.KeyboardInput;
-import net.minecraft.client.player.LocalPlayer;
 import net.minecraft.network.chat.Component;
 import net.minecraft.world.level.chunk.LevelChunk;
+import net.minecraft.world.phys.Vec2;
 import org.jspecify.annotations.Nullable;
 
 import java.util.*;
-import java.util.concurrent.CountDownLatch;
 import java.util.concurrent.atomic.AtomicLong;
 
 import static net.eabbott.meggo.Meggo.LOGGER;
@@ -390,6 +389,22 @@ public class MeggoManager {
 
     public static void setInput(MeggoInput input, boolean enabled) {
         playerMover.setInput(input, enabled);
+    }
+
+    public static void setView(float xRot, float yRot) {
+        Minecraft mc = Minecraft.getInstance();
+        if (mc.player != null) {
+            mc.player.setXRot(xRot);
+            mc.player.setYRot(yRot);
+        }
+    }
+
+    public static @Nullable Vec2 getView() {
+        Minecraft mc = Minecraft.getInstance();
+        if (mc.player != null) {
+            return new Vec2(mc.player.getXRot(), mc.player.getYRot());
+        }
+        return null;
     }
 }
 

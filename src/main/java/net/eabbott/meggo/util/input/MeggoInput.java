@@ -1,4 +1,4 @@
-package net.eabbott.meggo.util.movement;
+package net.eabbott.meggo.util.input;
 
 public enum MeggoInput {
     MOVE_FORWARD,
