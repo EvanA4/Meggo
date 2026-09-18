@@ -23,6 +23,7 @@ public class MeggoClient implements ClientModInitializer  {
         MeggoManager.addScript("zombie", ZombieScript.class);
         MeggoManager.addScript("motor", MotorScript.class);
         MeggoManager.addScript("path", PathScript.class);
+        MeggoManager.addScript("find", FindScript.class);
 
         ClientTickEvents.START_LEVEL_TICK.register(world -> MeggoManager.onClientWorldTick());
         ScreenEvents.AFTER_INIT.register(this::afterInitScreen);
