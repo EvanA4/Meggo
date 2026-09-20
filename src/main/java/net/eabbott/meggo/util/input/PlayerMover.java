@@ -1,5 +1,7 @@
 package net.eabbott.meggo.util.input;
 
+import com.mojang.blaze3d.platform.InputConstants;
+import net.minecraft.client.KeyMapping;
 import net.minecraft.client.Minecraft;
 import net.minecraft.world.phys.Vec2;
 import org.jspecify.annotations.Nullable;
@@ -7,23 +9,9 @@ import org.jspecify.annotations.Nullable;
 import java.util.HashMap;
 
 public class PlayerMover {
-    private final HashMap<MeggoInput, Boolean> forced = new HashMap<>();
+    private static final HashMap<String, InputConstants.Key> bindings = new HashMap<>();
 
-    public PlayerMover() {
-        for (MeggoInput input : MeggoInput.values()) {
-            forced.put(input, false);
-        }
-    }
-
-    public boolean getInput(MeggoInput input) {
-        return forced.get(input);
-    }
-
-    public void setInput(MeggoInput input, boolean enabled) {
-        forced.put(input, enabled);
-    }
-
-    public void setView(float pitch, float yaw) {
+    public static void setView(float pitch, float yaw) {
         Minecraft mc = Minecraft.getInstance();
         if (mc.player != null) {
             mc.player.setXRot(pitch);
@@ -31,7 +19,7 @@ public class PlayerMover {
         }
     }
 
-    public void setView(Vec2 view) {
+    public static void setView(Vec2 view) {
         Minecraft mc = Minecraft.getInstance();
         if (mc.player != null) {
             mc.player.setXRot(view.x);
@@ -39,11 +27,27 @@ public class PlayerMover {
         }
     }
 
-    public @Nullable Vec2 getView() {
+    public static @Nullable Vec2 getView() {
         Minecraft mc = Minecraft.getInstance();
         if (mc.player != null) {
             return mc.player.getRotationVector();
         }
         return null;
+    }
+
+    public static void setBinding(String name, InputConstants.Key key) {
+        bindings.put(name, key);
+    }
+
+    public static InputConstants.Key getBinding(String name) {
+        return bindings.get(name);
+    }
+
+    public static void clickBinding(PlayerKey name) {
+        KeyMapping.click(PlayerMover.getBinding(name.getValue()));
+    }
+
+    public static void setBinding(PlayerKey name, boolean enabled) {
+        KeyMapping.set(PlayerMover.getBinding(name.getValue()), enabled);
     }
 }

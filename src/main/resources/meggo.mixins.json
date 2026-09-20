@@ -9,7 +9,8 @@
 		"KeyboardHandlerMixin",
 		"LevelRendererMixin",
 		"MouseHandlerMixin",
-		"GuiMixin"
+		"GuiMixin",
+		"KeyMappingMixin"
 	],
 	"injectors": {
 		"defaultRequire": 1

@@ -4,11 +4,8 @@ import net.eabbott.meggo.MeggoEvent;
 import net.eabbott.meggo.MeggoManager;
 import net.eabbott.meggo.MeggoScript;
 import net.eabbott.meggo.dataclasses.LevelRenderContext;
-import net.minecraft.client.gui.components.EditBox;
-import net.minecraft.client.gui.screens.Screen;
-import net.minecraft.client.multiplayer.ClientLevel;
-import net.minecraft.network.chat.Component;
-import net.minecraft.world.level.chunk.LevelChunk;
+import net.eabbott.meggo.util.input.PlayerKey;
+import net.eabbott.meggo.util.input.PlayerMover;
 
 public class MotorScript extends MeggoScript {
     public MotorScript(Long runnerID, String name) {
@@ -35,6 +32,7 @@ public class MotorScript extends MeggoScript {
 
         try {
             Thread.sleep(sleepSeconds * 1000L);
+
         } catch (InterruptedException e) {
             MeggoManager.print("Motor sleep was interrupted!");
         } finally {

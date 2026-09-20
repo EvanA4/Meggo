@@ -25,11 +25,10 @@ public class KeyboardHandlerMixin {
       cancellable = true)
   private void keyPress(long window, int action, KeyEvent event, CallbackInfo ci) {
     Minecraft mc = Minecraft.getInstance();
-    boolean isChatKey = mc.options.keyChat.matches(event);
     boolean isEscapeKey = event.isEscape();
     boolean isF5 = mc.options.keyTogglePerspective.matches(event);
     boolean isChatOpened = mc.gui.screen() instanceof ChatScreen;
-    if (MeggoManager.getIsInputLocked() && !isChatOpened && !isChatKey && !isEscapeKey && !isF5) ci.cancel();
+    if (MeggoManager.getIsInputLocked() && !isChatOpened && !isEscapeKey && !isF5) ci.cancel();
 
     int key = event.key();
     int scanCode = event.scancode();

@@ -6,7 +6,7 @@ import net.eabbott.meggo.MeggoScript;
 import net.eabbott.meggo.dataclasses.LevelRenderContext;
 import net.eabbott.meggo.util.MeggoMath;
 import net.eabbott.meggo.util.MeggoUtil;
-import net.eabbott.meggo.util.input.MeggoInput;
+import net.eabbott.meggo.util.input.PlayerKey;
 import net.eabbott.meggo.util.input.PlayerMover;
 import net.minecraft.client.Minecraft;
 import net.minecraft.client.player.LocalPlayer;
@@ -82,16 +82,15 @@ public class PathScript extends MeggoScript {
             path.advance();
         }
 
-        PlayerMover pm = MeggoManager.playerMover;
         if (!Thread.interrupted() && !path.isDone()) {
             Vec2 forward = MeggoMath.getAngle(nextV3, player.position());
-            pm.setView(forward);
-            pm.setInput(MeggoInput.JUMP, player.position().y < next.y);
-            pm.setInput(MeggoInput.MOVE_FORWARD, true);
+            PlayerMover.setView(forward);
+            PlayerMover.setBinding(PlayerKey.JUMP, player.position().y < next.y);
+            PlayerMover.setBinding(PlayerKey.FORWARD, true);
 
         } else {
-            pm.setInput(MeggoInput.MOVE_FORWARD, false);
-            pm.setInput(MeggoInput.JUMP, false);
+            PlayerMover.setBinding(PlayerKey.FORWARD, false);
+            PlayerMover.setBinding(PlayerKey.JUMP, false);
             removeListener(MeggoEvent.RENDER_BEGIN);
         }
     }

@@ -3,18 +3,14 @@ package net.eabbott.meggo;
 import net.eabbott.meggo.dataclasses.EventArgs;
 import net.eabbott.meggo.dataclasses.LevelRenderContext;
 import net.eabbott.meggo.util.concurrent.*;
-import net.eabbott.meggo.util.input.ForcedClientInput;
-import net.eabbott.meggo.util.input.MeggoInput;
 import net.eabbott.meggo.util.input.PlayerMover;
 import net.minecraft.client.Minecraft;
 import net.minecraft.client.gui.components.EditBox;
 import net.minecraft.client.gui.screens.ChatScreen;
 import net.minecraft.client.gui.screens.Screen;
 import net.minecraft.client.multiplayer.ClientLevel;
-import net.minecraft.client.player.KeyboardInput;
 import net.minecraft.network.chat.Component;
 import net.minecraft.world.level.chunk.LevelChunk;
-import net.minecraft.world.phys.Vec2;
 import org.jspecify.annotations.Nullable;
 
 import java.util.*;
@@ -399,16 +395,7 @@ public class MeggoManager {
     }
 
     private static void toggleMovement(boolean locked) {
-        Minecraft mc = Minecraft.getInstance();
-        if (mc.player != null) {
-            if (locked) {
-                playerMover = new PlayerMover();
-                mc.player.input = new ForcedClientInput(playerMover);
-            } else {
-                mc.player.input = new KeyboardInput(mc.options);
-            }
-            isInputLocked = locked;
-        }
+        isInputLocked = locked;
     }
 }
 
