@@ -63,4 +63,10 @@ public class PlayerMover {
         if (mc.player == null || mc.gameMode == null) return;
         mc.gameMode.handleContainerInput(currentContainerID, slotNum, buttonNum, containerInput, mc.player);
     }
+
+    public static void closeInventory() {
+        Minecraft mc = Minecraft.getInstance();
+        if (mc.gui.screen() == null || !mc.gui.screen().shouldCloseOnEsc()) return;
+        mc.gui.screen().onClose();
+    }
 }

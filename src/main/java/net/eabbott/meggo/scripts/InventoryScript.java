@@ -13,10 +13,14 @@ public class InventoryScript extends MeggoScript {
 
     @Override
     public void run(String[] args) {
-//        PlayerMover.clickBinding(PlayerKey.INVENTORY);
-//        PlayerMover.changeInventory(36, 0, ContainerInput.PICKUP);
-//        PlayerMover.changeInventory(37, 0, ContainerInput.PICKUP);
-        PlayerMover.clickBinding(PlayerKey.TOGGLE_GUI);
+        try {
+            PlayerMover.clickBinding(PlayerKey.INVENTORY);
+            Thread.sleep(500);
+            PlayerMover.changeInventory(36, 0, ContainerInput.PICKUP);
+            PlayerMover.changeInventory(37, 0, ContainerInput.PICKUP);
+            Thread.sleep(500);
+            PlayerMover.closeInventory();
+        } catch (Exception _) {}
     }
 
     @Override
