@@ -10,7 +10,8 @@
 		"LevelRendererMixin",
 		"MouseHandlerMixin",
 		"GuiMixin",
-		"KeyMappingMixin"
+		"KeyMappingMixin",
+		"MultiPlayerGameModeMixin"
 	],
 	"injectors": {
 		"defaultRequire": 1

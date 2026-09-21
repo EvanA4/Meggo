@@ -3,6 +3,8 @@ package net.eabbott.meggo.util.input;
 import com.mojang.blaze3d.platform.InputConstants;
 import net.minecraft.client.KeyMapping;
 import net.minecraft.client.Minecraft;
+import net.minecraft.world.entity.player.Player;
+import net.minecraft.world.inventory.ContainerInput;
 import net.minecraft.world.phys.Vec2;
 import org.jspecify.annotations.Nullable;
 
@@ -10,6 +12,7 @@ import java.util.HashMap;
 
 public class PlayerMover {
     private static final HashMap<String, InputConstants.Key> bindings = new HashMap<>();
+    private static int currentContainerID = -1;
 
     public static void setView(float pitch, float yaw) {
         Minecraft mc = Minecraft.getInstance();
@@ -49,5 +52,15 @@ public class PlayerMover {
 
     public static void setBinding(PlayerKey name, boolean enabled) {
         KeyMapping.set(PlayerMover.getBinding(name.getValue()), enabled);
+    }
+
+    public static void setCurrentContainer(int newContainerID) {
+        currentContainerID = newContainerID;
+    }
+
+    public static void changeInventory(final int slotNum, final int buttonNum, final ContainerInput containerInput) {
+        Minecraft mc = Minecraft.getInstance();
+        if (mc.player == null || mc.gameMode == null) return;
+        mc.gameMode.handleContainerInput(currentContainerID, slotNum, buttonNum, containerInput, mc.player);
     }
 }
