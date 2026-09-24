@@ -1,4 +1,4 @@
-package net.eabbott.verdi.util;
+package net.eabbott.verdi.util.path;
 
 import net.minecraft.client.player.LocalPlayer;
 import net.minecraft.core.BlockPos;

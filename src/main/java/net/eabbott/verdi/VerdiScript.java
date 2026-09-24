@@ -7,16 +7,19 @@ import net.minecraft.client.multiplayer.ClientLevel;
 import net.minecraft.network.chat.Component;
 import net.minecraft.world.level.chunk.LevelChunk;
 
-public abstract class MeggoScript {
-    public Long runnerID;
-    public String name;
-    public MeggoScript(Long runnerID, String name) { this.runnerID = runnerID; this.name = name; }
-    public abstract void run(String[] args);
-    public abstract void render(LevelRenderContext levelRenderContext);
+public abstract class VerdiScript {
+    public boolean isInterrupted = false;
+    public void interrupt() { this.isInterrupted = true; }
+    public void exit() { VerdiShell.interrupt(); }
+
+    public static String name() { return ""; }
+    public static String usage() { return ""; }
     public abstract boolean isMotor();
 
+    public abstract void run(String[] args);
+
     public void onClientChatReceived(Component message) {}
-    public void setChatScreenInput(EditBox input) {}
+    public void onSetChatScreenInput(EditBox input) {}
     public void onRenderPassBegin(String string) {}
     public void onKeyboardEvent(int key, int scanCode, int action, int modifiers) {}
     public void onKeyInput(int key) {}
@@ -27,11 +30,4 @@ public abstract class MeggoScript {
     public void onChunkLoad(ClientLevel world, LevelChunk chunk) {}
     public void onChunkUnload(ClientLevel world, LevelChunk chunk) {}
     public void onClientWorldTick() {}
-
-    public void addListener(MeggoEvent event) {
-        MeggoManager.addListener(runnerID, event);
-    }
-    public void removeListener(MeggoEvent event) {
-        MeggoManager.interruptListener(runnerID, event);
-    }
 }

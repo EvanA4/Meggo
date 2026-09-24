@@ -4,7 +4,7 @@
 package net.eabbott.verdi.mixin;
 
 import com.mojang.blaze3d.framegraph.FrameGraphBuilder;
-import net.eabbott.verdi.MeggoManager;
+import net.eabbott.verdi.VerdiShell;
 import org.spongepowered.asm.mixin.Mixin;
 import org.spongepowered.asm.mixin.injection.At;
 import org.spongepowered.asm.mixin.injection.ModifyVariable;
@@ -27,7 +27,7 @@ public class FrameGraphBuilderMixin {
     @Override
     public void beforeExecutePass(String string) {
       inspector.beforeExecutePass(string);
-      MeggoManager.onRenderPassBegin(string);
+      VerdiShell.onRenderPassBegin(string);
     }
   }
 

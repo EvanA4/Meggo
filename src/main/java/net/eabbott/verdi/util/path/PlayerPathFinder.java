@@ -1,4 +1,4 @@
-package net.eabbott.verdi.util;
+package net.eabbott.verdi.util.path;
 
 import com.google.common.collect.Lists;
 import com.google.common.collect.Sets;

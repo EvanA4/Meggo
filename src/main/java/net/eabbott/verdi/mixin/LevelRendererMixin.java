@@ -5,7 +5,7 @@ package net.eabbott.verdi.mixin;
 
 import com.mojang.blaze3d.buffers.GpuBufferSlice;
 import com.mojang.blaze3d.resource.GraphicsResourceAllocator;
-import net.eabbott.verdi.MeggoManager;
+import net.eabbott.verdi.VerdiShell;
 import net.eabbott.verdi.dataclasses.LevelRenderContext;
 import net.minecraft.client.DeltaTracker;
 import net.minecraft.client.renderer.LevelRenderer;
@@ -34,7 +34,7 @@ public class LevelRendererMixin {
       Vector4f fogColor,
       boolean renderSky,
       CallbackInfo ci) {
-    MeggoManager.onRenderBegin(
+    VerdiShell.onRenderBegin(
         new LevelRenderContext(
             (LevelRenderer) (Object) this,
             deltaTracker,
@@ -60,6 +60,6 @@ public class LevelRendererMixin {
       Vector4f fogColor,
       boolean renderSky,
       CallbackInfo ci) {
-    MeggoManager.onRenderEnd();
+    VerdiShell.onRenderEnd();
   }
 }

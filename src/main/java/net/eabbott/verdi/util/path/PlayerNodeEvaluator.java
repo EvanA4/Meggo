@@ -1,4 +1,4 @@
-package net.eabbott.verdi.util;
+package net.eabbott.verdi.util.path;
 
 import it.unimi.dsi.fastutil.ints.Int2ObjectMap;
 import it.unimi.dsi.fastutil.ints.Int2ObjectOpenHashMap;
@@ -35,8 +35,6 @@ import org.jspecify.annotations.Nullable;
 import static net.minecraft.world.level.pathfinder.NodeEvaluator.isBurningBlock;
 
 public class PlayerNodeEvaluator {
-    public static final double SPACE_BETWEEN_WALL_POSTS = 0.5;
-    private static final double DEFAULT_MOB_JUMP_HEIGHT = 1.125;
     private final Long2ObjectMap<PathType> pathTypesByPosCacheByMob = new Long2ObjectOpenHashMap<>();
     private final Object2BooleanMap<AABB> collisionCache = new Object2BooleanOpenHashMap<>();
     private final Node[] reusableNeighbors = new Node[Direction.Plane.HORIZONTAL.length()];

@@ -3,11 +3,11 @@
 
 package net.eabbott.verdi.mixin;
 
+import net.eabbott.verdi.VerdiShell;
 import net.minecraft.client.gui.components.ChatComponent;
 import net.minecraft.client.multiplayer.chat.GuiMessageTag;
 import net.minecraft.network.chat.Component;
 import net.minecraft.network.chat.MessageSignature;
-import net.eabbott.verdi.MeggoManager;
 import org.spongepowered.asm.mixin.Mixin;
 import org.spongepowered.asm.mixin.injection.At;
 import org.spongepowered.asm.mixin.injection.Inject;
@@ -20,7 +20,7 @@ public class ChatComponentMixin {
       method = "addClientSystemMessage(Lnet/minecraft/network/chat/Component;)V",
       cancellable = true)
   private void addClientSystemMessage(Component message, CallbackInfo ci) {
-    if (MeggoManager.onClientChatReceived(message)) {
+    if (VerdiShell.onClientChatReceived(message)) {
       ci.cancel();
     }
   }
@@ -32,7 +32,7 @@ public class ChatComponentMixin {
       cancellable = true)
   private void addPlayerMessage(
       Component message, MessageSignature signature, GuiMessageTag tag, CallbackInfo ci) {
-    if (MeggoManager.onClientChatReceived(message)) {
+    if (VerdiShell.onClientChatReceived(message)) {
       ci.cancel();
     }
   }

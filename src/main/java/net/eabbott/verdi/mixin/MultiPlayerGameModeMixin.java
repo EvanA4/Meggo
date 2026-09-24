@@ -3,7 +3,8 @@
 
 package net.eabbott.verdi.mixin;
 
-import net.eabbott.verdi.MeggoManager;
+import net.eabbott.verdi.VerdiShell;
+import net.eabbott.verdi.util.VerdiChat;
 import net.minecraft.client.multiplayer.MultiPlayerGameMode;
 import net.minecraft.world.entity.player.Player;
 import net.minecraft.world.inventory.ContainerInput;
@@ -22,8 +23,8 @@ public class MultiPlayerGameModeMixin {
   public void handleContainerInput(
         final int containerId, final int slotNum, final int buttonNum, final ContainerInput containerInput, final Player player, CallbackInfo ci
   ) {
-      MeggoManager.print(
-          String.format("Calling handleContainerInput %d %d %d %s %s", containerId, slotNum, buttonNum, containerInput, player.getPlainTextName())
+      VerdiChat.send(
+          "Calling handleContainerInput %d %d %d %s %s", containerId, slotNum, buttonNum, containerInput, player.getPlainTextName()
       );
   }
 }

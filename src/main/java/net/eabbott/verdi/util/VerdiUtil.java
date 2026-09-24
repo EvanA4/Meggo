@@ -1,5 +1,7 @@
 package net.eabbott.verdi.util;
 
+import net.eabbott.verdi.util.path.PlayerNodeEvaluator;
+import net.eabbott.verdi.util.path.PlayerPathFinder;
 import net.minecraft.client.Minecraft;
 import net.minecraft.core.BlockPos;
 import net.minecraft.world.entity.Entity;
@@ -12,7 +14,7 @@ import org.jspecify.annotations.Nullable;
 import java.util.HashSet;
 import java.util.Set;
 
-public class MeggoUtil {
+public class VerdiUtil {
     public static @Nullable BlockPos getTargetedBlock(double maxDistance) {
         var minecraft = Minecraft.getInstance();
         var entity = minecraft.getCameraEntity();

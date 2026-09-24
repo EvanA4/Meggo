@@ -1,9 +1,9 @@
 package net.eabbott.verdi.scripts;
 
 import com.mojang.brigadier.exceptions.CommandSyntaxException;
-import net.eabbott.verdi.MeggoManager;
-import net.eabbott.verdi.MeggoScript;
+import net.eabbott.verdi.VerdiScript;
 import net.eabbott.verdi.dataclasses.LevelRenderContext;
+import net.eabbott.verdi.util.VerdiChat;
 import net.minecraft.client.Minecraft;
 import net.minecraft.commands.CommandBuildContext;
 import net.minecraft.commands.Commands;
@@ -17,22 +17,26 @@ import net.minecraft.gizmos.Gizmos;
 import net.minecraft.util.ARGB;
 import net.minecraft.world.level.block.Block;
 import net.minecraft.world.phys.AABB;
+import org.jspecify.annotations.Nullable;
 
 import java.util.List;
 import java.util.Vector;
+import java.util.concurrent.ExecutionException;
+import java.util.concurrent.ExecutorService;
+import java.util.concurrent.Executors;
+import java.util.concurrent.Future;
 
-public class FindScript extends MeggoScript {
+public class FindScript extends VerdiScript {
+    ExecutorService executor = Executors.newSingleThreadExecutor();
     Minecraft mc = Minecraft.getInstance();
-    List<BlockPos> found = new Vector<>();
-
-    public FindScript(Long runnerID, String name) {
-        super(runnerID, name);
-    }
+    @Nullable Future<List<BlockPos>> found = null;
+    boolean havePrintedResult = false;
+    int ticksToSleep = 200; // 10 seconds
 
     @Override
     public void run(String[] args) {
         if (args.length != 3) {
-            MeggoManager.print("usage: find <block type> <range>");
+            VerdiChat.send("usage: find <block type> <range>");
             return;
         }
 
@@ -41,21 +45,19 @@ public class FindScript extends MeggoScript {
         try {
             BlockStateParser.BlockResult result = BlockStateParser.parseForBlock(blocks, args[1], true);
             Block target = result.blockState().getBlock();
-            this.found = findBlock(target, Integer.parseInt(args[2]));
-            if (!this.found.isEmpty()) {
-                MeggoManager.print(
-                    String.format("Found %d block(s).", this.found.size())
-                );
-                Thread.sleep(60 * 1000);
-            } else {
-                MeggoManager.print("Could not find block within specified range.");
-            }
+            this.found = asyncFindBlock(target, Integer.parseInt(args[2]));
 
         } catch (CommandSyntaxException e) {
-            MeggoManager.print("Error: invalid block type.");
+            VerdiChat.send("Error: invalid block type.");
+            exit();
         } catch (NumberFormatException e) {
-            MeggoManager.print("Error: invalid range.");
-        } catch (InterruptedException _) {}
+            VerdiChat.send("Error: invalid range.");
+            exit();
+        }
+    }
+
+    public Future<List<BlockPos>> asyncFindBlock(Block target, int searchRange) {
+        return executor.submit(() -> findBlock(target, searchRange));
     }
 
     private List<BlockPos> findBlock(Block target, int searchRange) {
@@ -105,15 +107,42 @@ public class FindScript extends MeggoScript {
     }
 
     @Override
-    public void render(LevelRenderContext levelRenderContext) {
-        if (found != null) {
-            var color       = ARGB.color(0, 0, 200, 255);
-            var fill_color  = ARGB.color(50,  0, 200, 255);
-            var filled      = GizmoStyle.strokeAndFill(color, 1.5f, fill_color);
-            for (BlockPos pos : found) {
-                var box = new AABB(new BlockPos(pos.getX(), pos.getY(), pos.getZ()));
-                Gizmos.cuboid(box, filled).setAlwaysOnTop();
+    public void onRenderBegin(LevelRenderContext levelRenderContext) {
+        if (this.found != null && this.found.isDone()) {
+            try {
+                List<BlockPos> toRender = this.found.get();
+
+                if (!this.havePrintedResult) {
+                    if (!toRender.isEmpty()) {
+                        VerdiChat.send("Found %d block(s).", toRender.size());
+                        Thread.sleep(60 * 1000);
+                    } else {
+                        VerdiChat.send("Could not find block within specified range.");
+                        exit();
+                    }
+                    this.havePrintedResult = true;
+                }
+
+                var color       = ARGB.color(0, 0, 200, 255);
+                var fill_color  = ARGB.color(50,  0, 200, 255);
+                var filled      = GizmoStyle.strokeAndFill(color, 1.5f, fill_color);
+                for (BlockPos pos : toRender) {
+                    var box = new AABB(new BlockPos(pos.getX(), pos.getY(), pos.getZ()));
+                    Gizmos.cuboid(box, filled).setAlwaysOnTop();
+                }
+
+            } catch (Exception e) {
+                VerdiChat.send("Failed to access list of found blocks: %s", e.getMessage());
+                exit();
             }
+        }
+    }
+
+    @Override
+    public void onClientWorldTick() {
+        if (havePrintedResult) {
+            if (ticksToSleep > 0) --ticksToSleep;
+            else exit();
         }
     }
 

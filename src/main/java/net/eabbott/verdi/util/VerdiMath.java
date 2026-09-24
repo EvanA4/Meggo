@@ -3,7 +3,7 @@ package net.eabbott.verdi.util;
 import net.minecraft.world.phys.Vec2;
 import net.minecraft.world.phys.Vec3;
 
-public class MeggoMath {
+public class VerdiMath {
     public static Vec2 getAngle(Vec3 to, Vec3 from) {
         double dx = to.x - from.x;
         double dy = to.y - from.y;

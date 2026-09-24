@@ -1,6 +1,6 @@
 package net.eabbott.verdi.mixin;
 
-import net.eabbott.verdi.MeggoManager;
+import net.eabbott.verdi.VerdiShell;
 import net.eabbott.verdi.util.input.PlayerMover;
 import net.minecraft.client.gui.Gui;
 import net.minecraft.client.gui.screens.PauseScreen;
@@ -19,7 +19,7 @@ public abstract class GuiMixin {
     )
     private void setScreen(Screen screen, CallbackInfo ci) {
         if (screen instanceof PauseScreen) {
-            MeggoManager.interruptAllTasks();
+            VerdiShell.interrupt();
         } else if (screen instanceof AbstractContainerScreen<?>) {
             PlayerMover.setCurrentContainer(((AbstractContainerScreen<?>) screen).getMenu().containerId);
         }

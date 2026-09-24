@@ -13,27 +13,13 @@ import net.minecraft.client.gui.screens.Screen;
 public class VerdiClient implements ClientModInitializer  {
     @Override
     public void onInitializeClient() {
-        ClientChunkEvents.CHUNK_LOAD.register(MeggoManager::onChunkLoad);
-        ClientChunkEvents.CHUNK_UNLOAD.register(MeggoManager::onChunkUnload);
+        ClientChunkEvents.CHUNK_LOAD.register(VerdiShell::onChunkLoad);
+        ClientChunkEvents.CHUNK_UNLOAD.register(VerdiShell::onChunkUnload);
 
-        MeggoManager.init();
-        MeggoManager.addScript("args", ArgsScript.class);
-        MeggoManager.addScript("sleep", SleepScript.class);
-        MeggoManager.addScript("listen", ListenScript.class);
-        MeggoManager.addScript("zombie", ZombieScript.class);
-        MeggoManager.addScript("motor", MotorScript.class);
-        MeggoManager.addScript("path", PathScript.class);
-        MeggoManager.addScript("find", FindScript.class);
-        MeggoManager.addScript("inventory", InventoryScript.class);
+        // VerdiShell.addScript("path", PathScript.class);
+        VerdiShell.addScript("find", FindScript.class);
+        // VerdiShell.addScript("craft", CraftScript.class);
 
-        ClientTickEvents.START_LEVEL_TICK.register(world -> MeggoManager.onClientWorldTick());
-        ScreenEvents.AFTER_INIT.register(this::afterInitScreen);
-    }
-
-    private void afterInitScreen(Minecraft client, Screen screen, int windowWidth, int windowHeight) {
-        if (screen instanceof ChatScreen) {
-            ScreenKeyboardEvents.allowKeyPress(screen)
-                    .register((_screen, event) -> !MeggoManager.onKeyboardKeyPressed(_screen, event.key()));
-        }
+        ClientTickEvents.START_LEVEL_TICK.register(_ -> VerdiShell.onClientWorldTick());
     }
 }

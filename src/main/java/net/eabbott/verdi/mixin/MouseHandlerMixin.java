@@ -3,7 +3,7 @@
 
 package net.eabbott.verdi.mixin;
 
-import net.eabbott.verdi.MeggoManager;
+import net.eabbott.verdi.VerdiShell;
 import net.minecraft.client.Minecraft;
 import net.minecraft.client.MouseHandler;
 import net.minecraft.client.input.MouseButtonInfo;
@@ -31,11 +31,11 @@ public abstract class MouseHandlerMixin {
   private void onButton(long window, MouseButtonInfo mouseButtonInfo, int action, CallbackInfo ci) {
     Minecraft mc = Minecraft.getInstance();
     boolean isScreenOpen = mc.gui.screen() != null;
-    if (MeggoManager.getIsInputLocked() && !isScreenOpen) ci.cancel();
+    if (VerdiShell.getIsInputLocked() && !isScreenOpen) ci.cancel();
 
     int button = mouseButtonInfo.button();
     int modifiers = mouseButtonInfo.modifiers();
-    MeggoManager.onMouseClick(button, action, modifiers, this.xpos(), this.ypos());
+    VerdiShell.onMouseClick(button, action, modifiers, this.xpos(), this.ypos());
   }
 
   @Inject(
@@ -45,7 +45,7 @@ public abstract class MouseHandlerMixin {
   private void onScroll(final long handle, final double xoffset, final double yoffset, CallbackInfo ci) {
     Minecraft mc = Minecraft.getInstance();
     boolean isScreenOpen = mc.gui.screen() != null;
-    if (MeggoManager.getIsInputLocked() && !isScreenOpen) ci.cancel();
+    if (VerdiShell.getIsInputLocked() && !isScreenOpen) ci.cancel();
   }
 
   @Inject(
@@ -55,7 +55,7 @@ public abstract class MouseHandlerMixin {
   private void onDrop(final long handle, final List<Path> files, final int failedCount, CallbackInfo ci) {
     Minecraft mc = Minecraft.getInstance();
     boolean isScreenOpen = mc.gui.screen() != null;
-    if (MeggoManager.getIsInputLocked() && !isScreenOpen) ci.cancel();
+    if (VerdiShell.getIsInputLocked() && !isScreenOpen) ci.cancel();
   }
 
   @Inject(
@@ -65,7 +65,7 @@ public abstract class MouseHandlerMixin {
   private void onMove(final long handle, final double xpos, final double ypos, CallbackInfo ci) {
     Minecraft mc = Minecraft.getInstance();
     boolean isScreenOpen = mc.gui.screen() != null;
-    if (MeggoManager.getIsInputLocked() && !isScreenOpen) ci.cancel();
+    if (VerdiShell.getIsInputLocked() && !isScreenOpen) ci.cancel();
   }
 
 }

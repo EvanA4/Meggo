@@ -3,7 +3,7 @@
 
 package net.eabbott.verdi.mixin;
 
-import net.eabbott.verdi.MeggoManager;
+import net.eabbott.verdi.VerdiShell;
 import net.minecraft.client.gui.components.EditBox;
 import net.minecraft.client.gui.screens.ChatScreen;
 import org.spongepowered.asm.mixin.Mixin;
@@ -18,6 +18,6 @@ public class ChatScreenMixin {
 
   @Inject(at = @At("TAIL"), method = "init()V")
   protected void init(CallbackInfo ci) {
-    MeggoManager.setChatScreenInput(this.input);
+    VerdiShell.setChatScreenInput(this.input);
   }
 }
