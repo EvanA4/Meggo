@@ -1,32 +1,32 @@
 {
 	"schemaVersion": 1,
-	"id": "meggo",
+	"id": "verdi",
 	"version": "${version}",
-	"name": "Meggo",
-	"description": "A Fabric, client-side mod for miscellaneous commands.",
+	"name": "Verdi",
+	"description": "A Fabric, client-side mod for controlling the player.",
 	"authors": [
 		"Evan Abbott"
 	],
 	"contact": {
 		"homepage": "https://fabricmc.net/",
-		"sources": "https://github.com/EvanA4/Meggo"
+		"sources": "https://github.com/EvanA4/Verdi"
 	},
 	"license": "MIT",
-	"icon": "assets/meggo/icon.png",
+	"icon": "assets/verdi/icon.png",
 	"environment": "*",
 	"entrypoints": {
 		"main": [
-			"net.eabbott.meggo.Meggo"
+			"net.eabbott.verdi.VerdiMain"
 		],
 		"fabric-datagen": [
-			"net.eabbott.meggo.MeggoDataGenerator"
+			"net.eabbott.verdi.VerdiDataGenerator"
 		],
 		"client": [
-			"net.eabbott.meggo.MeggoClient"
+			"net.eabbott.verdi.VerdiClient"
 		]
 	},
 	"mixins": [
-		"meggo.mixins.json"
+		"verdi.mixins.json"
 	],
 	"depends": {
 		"fabricloader": ">=0.19.5",
