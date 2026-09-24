@@ -13,6 +13,7 @@ import org.jspecify.annotations.Nullable;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
+import java.lang.reflect.InvocationTargetException;
 import java.util.*;
 
 public class VerdiShell {
@@ -62,6 +63,8 @@ public class VerdiShell {
 
     private static void help() {
         VerdiChat.send("Built-in commands:");
+        VerdiChat.send("    \\status");
+        VerdiChat.send("        Prints whether a task is currently running.");
         VerdiChat.send("    \\interrupt");
         VerdiChat.send("        Interrupts the currently running task, asking it to quit safely.");
         VerdiChat.send("    \\help");
@@ -75,7 +78,11 @@ public class VerdiShell {
 
     private static void handleMeggoCommand(String[] args) {
         // Check manager commands
-        if (Objects.equals(args[0], "interrupt")) {
+        if (args[0].equals("status")) {
+            if (currentTask != null) VerdiChat.send("A task is currently running.");
+            else VerdiChat.send("No task is running.");
+
+        } else if (args[0].equals("interrupt")) {
             if (args.length != 1) {
                 VerdiChat.send("usage: \\interrupt");
             } else {
@@ -91,8 +98,11 @@ public class VerdiShell {
         }
 
         // Check non-manager commands
-        else if (!scripts.containsKey(args[0])) {
-            VerdiChat.send(String.format("Command not recognized: \"%s\"", args[0]));
+        else if (currentTask != null) {
+            VerdiChat.send("Error: A task is already running.");
+
+        } else if (!scripts.containsKey(args[0])) {
+            VerdiChat.send("Command not recognized: \"%s\"", args[0]);
 
         } else {
             try {
@@ -107,7 +117,9 @@ public class VerdiShell {
     }
 
     public static void addScript(String name, Class<? extends VerdiScript> script) {
-        scripts.put(name, script);
+        try {
+            scripts.put(name, script);
+        } catch (Exception _) {}
     }
 
     public static boolean getIsInputLocked() {

@@ -115,7 +115,6 @@ public class FindScript extends VerdiScript {
                 if (!this.havePrintedResult) {
                     if (!toRender.isEmpty()) {
                         VerdiChat.send("Found %d block(s).", toRender.size());
-                        Thread.sleep(60 * 1000);
                     } else {
                         VerdiChat.send("Could not find block within specified range.");
                         exit();

@@ -18,6 +18,7 @@ public class VerdiClient implements ClientModInitializer  {
 
         // VerdiShell.addScript("path", PathScript.class);
         VerdiShell.addScript("find", FindScript.class);
+        VerdiShell.addScript("sleep", SleepScript.class);
         // VerdiShell.addScript("craft", CraftScript.class);
 
         ClientTickEvents.START_LEVEL_TICK.register(_ -> VerdiShell.onClientWorldTick());

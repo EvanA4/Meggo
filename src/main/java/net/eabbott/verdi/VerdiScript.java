@@ -12,8 +12,6 @@ public abstract class VerdiScript {
     public void interrupt() { this.isInterrupted = true; }
     public void exit() { VerdiShell.interrupt(); }
 
-    public static String name() { return ""; }
-    public static String usage() { return ""; }
     public abstract boolean isMotor();
 
     public abstract void run(String[] args);
