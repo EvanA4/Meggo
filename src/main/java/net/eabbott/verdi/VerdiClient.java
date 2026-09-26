@@ -4,11 +4,6 @@ import net.eabbott.verdi.scripts.*;
 import net.fabricmc.api.ClientModInitializer;
 import net.fabricmc.fabric.api.client.event.lifecycle.v1.ClientChunkEvents;
 import net.fabricmc.fabric.api.client.event.lifecycle.v1.ClientTickEvents;
-import net.fabricmc.fabric.api.client.screen.v1.ScreenEvents;
-import net.fabricmc.fabric.api.client.screen.v1.ScreenKeyboardEvents;
-import net.minecraft.client.Minecraft;
-import net.minecraft.client.gui.screens.ChatScreen;
-import net.minecraft.client.gui.screens.Screen;
 
 public class VerdiClient implements ClientModInitializer  {
     @Override
@@ -19,6 +14,7 @@ public class VerdiClient implements ClientModInitializer  {
         // VerdiShell.addScript("path", PathScript.class);
         VerdiShell.addScript("find", FindScript.class);
         VerdiShell.addScript("sleep", SleepScript.class);
+        VerdiShell.addScript("break_block", BreakBlockScript.class);
         // VerdiShell.addScript("craft", CraftScript.class);
 
         ClientTickEvents.START_LEVEL_TICK.register(_ -> VerdiShell.onClientWorldTick());

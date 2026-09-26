@@ -3,7 +3,7 @@
 // import net.eabbott.verdi.VerdiShell;
 // import net.eabbott.verdi.VerdiScript;
 // import net.eabbott.verdi.dataclasses.LevelRenderContext;
-// import net.eabbott.verdi.util.VerdiMath;
+// import net.eabbott.verdi.util.math.VerdiMath;
 // import net.eabbott.verdi.util.VerdiUtil;
 // import net.eabbott.verdi.util.input.PlayerKey;
 // import net.eabbott.verdi.util.input.PlayerMover;
